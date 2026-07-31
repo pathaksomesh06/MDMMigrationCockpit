@@ -1,0 +1,241 @@
+{
+  "schemaVersion": 1,
+  "source": "apple/device-management — payloadkeys per payload",
+  "note": "Every setting each macOS payload defines, from Apple's own schemas. This is what the settings table lists, so a payload shows its full key list whether or not either tenant configures it. Payloads sharing a payloadType are separated by name.",
+  "payloads": {
+    ".GlobalPreferences": [
+      {"name": "Global Preferences", "keys": ["MultipleSessionEnabled", "com.apple.autologout.AutoLogOutDelay"]}
+    ],
+    "com.apple.Dictionary": [
+      {"name": "Parental Controls: Dictionary", "keys": ["parentalControl"]}
+    ],
+    "com.apple.DirectoryService.managed": [
+      {"name": "Directory Service", "keys": ["ADAllowMultiDomainAuth", "ADAllowMultiDomainAuthFlag", "ADCreateMobileAccountAtLogin", "ADCreateMobileAccountAtLoginFlag", "ADDefaultUserShell", "ADDefaultUserShellFlag", "ADDomainAdminGroupList", "ADDomainAdminGroupListFlag", "ADForceHomeLocal", "ADForceHomeLocalFlag", "ADMapGGIDAttribute", "ADMapGGIDAttributeFlag", "ADMapGIDAttribute", "ADMapGIDAttributeFlag", "ADMapUIDAttribute", "ADMapUIDAttributeFlag", "ADMountStyle", "ADNamespace", "ADNamespaceFlag", "ADOrganizationalUnit", "ADPacketEncrypt", "ADPacketEncryptFlag", "ADPacketSign", "ADPacketSignFlag", "ADPreferredDCServer", "ADPreferredDCServerFlag", "ADRestrictDDNS", "ADRestrictDDNSFlag", "ADTrustChangePassIntervalDays", "ADTrustChangePassIntervalDaysFlag", "ADUseWindowsUNCPath", "ADUseWindowsUNCPathFlag", "ADWarnUserBeforeCreatingMA", "ADWarnUserBeforeCreatingMAFlag", "ClientID", "Description", "HostName", "Password", "UserName"]}
+    ],
+    "com.apple.DiscRecording": [
+      {"name": "Media Management: Disc Burning", "keys": ["BurnSupport"]}
+    ],
+    "com.apple.MCX": [
+      {"name": "Accounts", "keys": ["DisableGuestAccount", "EnableGuestAccount"]},
+      {"name": "Energy Saver", "keys": ["SleepDisabled", "com.apple.EnergySaver.desktop.ACPower", "com.apple.EnergySaver.desktop.Schedule", "com.apple.EnergySaver.portable.ACPower", "com.apple.EnergySaver.portable.BatteryPower"]},
+      {"name": "FDE FileVault Options", "keys": ["DestroyFVKeyOnStandby", "dontAllowFDEDisable", "dontAllowFDEEnable"]},
+      {"name": "Mobile Accounts", "keys": ["cachedaccounts.WarnOnCreate.allowNever", "cachedaccounts.askForSecureTokenAuthBypass", "cachedaccounts.expiry.delete.disusedSeconds", "com.apple.cachedaccounts.CreateAtLogin", "com.apple.cachedaccounts.WarnOnCreate"]},
+      {"name": "Time Server", "keys": ["timeServer", "timeZone"]},
+      {"name": "Wi-Fi Managed Settings", "keys": ["RequireAdminForAirPortNetworkChange", "RequireAdminForIBSS", "RequireAdminToTurnAirPortOnOff"]}
+    ],
+    "com.apple.MCX.FileVault2": [
+      {"name": "FDE FileVault", "keys": ["Certificate", "Defer", "DeferDontAskAtUserLogout", "DeferForceAtUserLoginMaxBypassAttempts", "Enable", "ForceEnableInSetupAssistant", "OutputPath", "Password", "PayloadCertificateUUID", "ShowRecoveryKey", "UseKeychain", "UseRecoveryKey", "UserEntersMissingInfo", "Username"]}
+    ],
+    "com.apple.MCX.TimeMachine": [
+      {"name": "Time Machine", "keys": ["AutoBackup", "BackupAllVolumes", "BackupDestURL", "BackupSizeMB", "BackupSkipSys", "BasePaths", "MobileBackups", "SkipPaths"]}
+    ],
+    "com.apple.ManagedClient.preferences": [
+      {"name": "Managed Preferences", "keys": ["PayloadContent"]}
+    ],
+    "com.apple.NSExtension": [
+      {"name": "NSExtension Management", "keys": ["AllowedExtensions", "DeniedExtensionPoints", "DeniedExtensions"]}
+    ],
+    "com.apple.SoftwareUpdate": [
+      {"name": "Software Update", "keys": ["AllowPreReleaseInstallation", "AutomaticCheckEnabled", "AutomaticDownload", "AutomaticallyInstallAppUpdates", "AutomaticallyInstallMacOSUpdates", "CatalogURL", "ConfigDataInstall", "CriticalUpdateInstall", "restrict-software-update-require-admin-to-install"]}
+    ],
+    "com.apple.SystemConfiguration": [
+      {"name": "Network Proxy Configuration", "keys": ["Proxies"]}
+    ],
+    "com.apple.TCC.configuration-profile-policy": [
+      {"name": "Privacy Preferences Policy Control", "keys": ["Services"]}
+    ],
+    "com.apple.airplay": [
+      {"name": "AirPlay", "keys": ["AllowList", "Passwords", "Whitelist"]}
+    ],
+    "com.apple.airprint": [
+      {"name": "AirPrint", "keys": ["AirPrint.ForceTLS", "AirPrint.IPAddress", "AirPrint.Port", "AirPrint.ResourcePath"]}
+    ],
+    "com.apple.applicationaccess": [
+      {"name": "Restrictions", "keys": ["allowARDRemoteManagementModification", "allowAccountModification", "allowActivityContinuation", "allowAddingGameCenterFriends", "allowAirDrop", "allowAirPlayIncomingRequests", "allowAirPrint", "allowAirPrintCredentialsStorage", "allowAirPrintiBeaconDiscovery", "allowAppCellularDataModification", "allowAppClips", "allowAppInstallation", "allowAppRemoval", "allowAppleIntelligenceReport", "allowApplePersonalizedAdvertising", "allowAppsToBeHidden", "allowAppsToBeLocked", "allowAssistant", "allowAssistantUserGeneratedContent", "allowAssistantWhileLocked", "allowAutoCorrection", "allowAutoDim", "allowAutoUnlock", "allowAutomaticAppDownloads", "allowAutomaticScreenSaver", "allowBluetoothModification", "allowBluetoothSharingModification", "allowBookstore", "allowBookstoreErotica", "allowCallRecording", "allowCamera", "allowCellularPlanModification", "allowChat", "allowCloudAddressBook", "allowCloudBackup", "allowCloudBookmarks", "allowCloudCalendar", "allowCloudDesktopAndDocuments", "allowCloudDocumentSync", "allowCloudFreeform", "allowCloudKeychainSync", "allowCloudMail", "allowCloudNotes", "allowCloudPhotoLibrary", "allowCloudPrivateRelay", "allowCloudReminders", "allowContentCaching", "allowContinuousPathKeyboard", "allowDefaultBrowserModification", "allowDefaultCallingAppModification", "allowDefaultMessagingAppModification", "allowDefinitionLookup", "allowDeviceNameModification", "allowDeviceSleep", "allowDiagnosticSubmission", "allowDiagnosticSubmissionModification", "allowDictation", "allowESIMModification", "allowESIMOutgoingTransfers", "allowEnablingRestrictions", "allowEnterpriseAppTrust", "allowEnterpriseBookBackup", "allowEnterpriseBookMetadataSync", "allowEraseContentAndSettings", "allowExplicitContent", "allowExternalIntelligenceIntegrations", "allowExternalIntelligenceIntegrationsSignIn", "allowFileSharingModification", "allowFilesNetworkDriveAccess", "allowFilesUSBDriveAccess", "allowFindMyDevice", "allowFindMyFriends", "allowFindMyFriendsModification", "allowFingerprintForUnlock", "allowFingerprintModification", "allowGameCenter", "allowGenmoji", "allowGlobalBackgroundFetchWhenRoaming", "allowHostPairing", "allowImagePlayground", "allowImageWand", "allowInAppPurchases", "allowInternetSharingModification", "allowKeyboardShortcuts", "allowListedAppBundleIDs", "allowLiveVoicemail", "allowLocalUserCreation", "allowLockScreenControlCenter", "allowLockScreenNotificationsView", "allowLockScreenTodayView", "allowMailPrivacyProtection", "allowMailSmartReplies", "allowMailSummary", "allowManagedAppsCloudSync", "allowManagedToWriteUnmanagedContacts", "allowMarketplaceAppInstallation", "allowMediaSharingModification", "allowMultiplayerGaming", "allowMusicService", "allowNFC", "allowNews", "allowNotesTranscription", "allowNotesTranscriptionSummary", "allowNotificationsModification", "allowOTAPKIUpdates", "allowOpenFromManagedToUnmanaged", "allowOpenFromUnmanagedToManaged", "allowPairedWatch", "allowPassbookWhileLocked", "allowPasscodeModification", "allowPasswordAutoFill", "allowPasswordProximityRequests", "allowPasswordSharing", "allowPersonalHotspotModification", "allowPersonalizedHandwritingResults", "allowPhotoStream", "allowPodcasts", "allowPredictiveKeyboard", "allowPrinterSharingModification", "allowProximitySetupToNewDevice", "allowRCSMessaging", "allowRadioService", "allowRapidSecurityResponseInstallation", "allowRapidSecurityResponseRemoval", "allowRemoteAppPairing", "allowRemoteAppleEventsModification", "allowRemoteScreenObservation", "allowRosettaUsageAwareness", "allowSafari", "allowSafariHistoryClearing", "allowSafariPrivateBrowsing", "allowSafariSummary", "allowSatelliteConnection", "allowScreenShot", "allowSharedDeviceTemporarySession", "allowSharedStream", "allowSpellCheck", "allowSpotlightInternetResults", "allowStartupDiskModification", "allowSystemAppRemoval", "allowTimeMachineBackup", "allowUIAppInstallation", "allowUIConfigurationProfileInstallation", "allowUSBRestrictedMode", "allowUniversalControl", "allowUnmanagedToReadManagedContacts", "allowUnpairedExternalBootToRecovery", "allowUntrustedTLSPrompt", "allowVPNCreation", "allowVideoConferencing", "allowVideoConferencingRemoteControl", "allowVisualIntelligenceSummary", "allowVoiceDialing", "allowWallpaperModification", "allowWebDistributionAppInstallation", "allowWritingTools", "allowedCameraRestrictionBundleIDs", "allowedExternalIntelligenceWorkspaceIDs", "allowiPhoneMirroring", "allowiPhoneWidgetsOnMac", "allowiTunes", "allowiTunesFileSharing", "autonomousSingleAppModePermittedAppIDs", "blacklistedAppBundleIDs", "blockedAppBundleIDs", "deniedICCIDsForRCS", "deniedICCIDsForiMessageFaceTime", "enforcedFingerprintTimeout", "enforcedSoftwareUpdateDelay", "enforcedSoftwareUpdateMajorOSDeferredInstallDelay", "enforcedSoftwareUpdateMinorOSDeferredInstallDelay", "enforcedSoftwareUpdateNonOSDeferredInstallDelay", "forceAirDropUnmanaged", "forceAirPlayIncomingRequestsPairingPassword", "forceAirPlayOutgoingRequestsPairingPassword", "forceAirPrintTrustedTLSRequirement", "forceAssistantProfanityFilter", "forceAuthenticationBeforeAutoFill", "forceAutomaticDateAndTime", "forceBypassScreenCaptureAlert", "forceClassroomAutomaticallyJoinClasses", "forceClassroomRequestPermissionToLeaveClasses", "forceClassroomUnpromptedAppAndDeviceLock", "forceClassroomUnpromptedScreenObservation", "forceDelayedAppSoftwareUpdates", "forceDelayedMajorSoftwareUpdates", "forceDelayedSoftwareUpdates", "forceEncryptedBackup", "forceITunesStorePasswordEntry", "forceLimitAdTracking", "forceOnDeviceOnlyDictation", "forceOnDeviceOnlyTranslation", "forcePreserveESIMOnErase", "forceWatchWristDetection", "forceWiFiPowerOn", "forceWiFiToAllowedNetworksOnly", "forceWiFiWhitelisting", "ratingApps", "ratingAppsExemptedBundleIDs", "ratingMovies", "ratingRegion", "ratingTVShows", "requireManagedPasteboard", "safariAcceptCookies", "safariAllowAutoFill", "safariAllowJavaScript", "safariAllowPopups", "safariForceFraudWarning", "whitelistedAppBundleIDs"]}
+    ],
+    "com.apple.appstore": [
+      {"name": "App Store", "keys": ["DisableSoftwareUpdateNotifications", "restrict-store-disable-app-adoption", "restrict-store-require-admin-to-install", "restrict-store-softwareupdate-only"]}
+    ],
+    "com.apple.asam": [
+      {"name": "Autonomous Single App Mode", "keys": ["AllowedApplications.BundleIdentifier", "AllowedApplications.TeamIdentifier"]}
+    ],
+    "com.apple.associated-domains": [
+      {"name": "Associated Domains", "keys": ["Configuration.ApplicationIdentifier", "Configuration.AssociatedDomains", "Configuration.EnableDirectDownloads"]}
+    ],
+    "com.apple.caldav.account": [
+      {"name": "CalDAV", "keys": ["CalDAVAccountDescription", "CalDAVHostName", "CalDAVPassword", "CalDAVPort", "CalDAVPrincipalURL", "CalDAVUseSSL", "CalDAVUsername", "VPNUUID"]}
+    ],
+    "com.apple.carddav.account": [
+      {"name": "CardDAV", "keys": ["CardDAVAccountDescription", "CardDAVHostName", "CardDAVPassword", "CardDAVPort", "CardDAVPrincipalURL", "CardDAVUseSSL", "CardDAVUsername", "CommunicationServiceRules", "VPNUUID"]}
+    ],
+    "com.apple.declarations": [
+      {"name": "Declarations", "keys": ["Declarations"]}
+    ],
+    "com.apple.desktop": [
+      {"name": "Desktop", "keys": ["locked", "override-picture-path"]}
+    ],
+    "com.apple.dnsProxy.managed": [
+      {"name": "DNS Proxy", "keys": ["AppBundleIdentifier", "DNSProxyUUID", "ProviderBundleIdentifier", "ProviderConfiguration"]}
+    ],
+    "com.apple.dnsSettings.managed": [
+      {"name": "DNS Settings", "keys": ["DNSSettings.AllowFailover", "DNSSettings.DNSProtocol", "DNSSettings.PayloadCertificateUUID", "DNSSettings.ServerAddresses", "DNSSettings.ServerName", "DNSSettings.ServerURL", "DNSSettings.SupplementalMatchDomains", "OnDemandRules.Action", "OnDemandRules.ActionParameters", "OnDemandRules.DNSDomainMatch", "OnDemandRules.DNSServerAddressMatch", "OnDemandRules.InterfaceTypeMatch", "OnDemandRules.SSIDMatch", "OnDemandRules.URLStringProbe", "ProhibitDisablement"]}
+    ],
+    "com.apple.dock": [
+      {"name": "Dock", "keys": ["AllowDockFixupOverride", "MCXDockSpecialFolders", "autohide", "autohide-immutable", "contents-immutable", "dblclickbehavior", "dblclickbehavior-immutable", "largesize", "launchanim", "launchanim-immutable", "magnification", "magnify-immutable", "magsize-immutable", "mineffect", "mineffect-immutable", "minimize-to-application", "minintoapp-immutable", "orientation", "persistent-apps", "persistent-others", "position-immutable", "show-process-indicators", "show-recents", "showindicators-immutable", "showrecents-immutable", "size-immutable", "static-apps", "static-only", "static-others", "tilesize", "windowtabbing", "windowtabbing-immutable"]}
+    ],
+    "com.apple.domains": [
+      {"name": "Domains", "keys": ["CrossSiteTrackingPreventionRelaxedApps", "CrossSiteTrackingPreventionRelaxedDomains", "EmailDomains", "SafariPasswordAutoFillDomains", "WebDomains"]}
+    ],
+    "com.apple.extensiblesso": [
+      {"name": "Extensible Single Sign-On (Kerberos)", "keys": ["ExtensionData", "ExtensionIdentifier", "Hosts", "Realm", "TeamIdentifier", "Type"]},
+      {"name": "Extensible Single Sign-On", "keys": ["AuthenticationMethod", "DeniedBundleIdentifiers", "ExtensionData", "ExtensionIdentifier", "Hosts", "PlatformSSO", "Realm", "RegistrationToken", "ScreenLockedBehavior", "TeamIdentifier", "Type", "URLs"]}
+    ],
+    "com.apple.familycontrols.contentfilter": [
+      {"name": "Parental Controls: Content Filter", "keys": ["allowListEnabled", "filterAllowList", "filterBlacklist", "filterDenyList", "filterWhitelist", "restrictWeb", "siteAllowList.address", "siteAllowList.pageTitle", "siteWhitelist.address", "siteWhitelist.pageTitle", "useContentFilter", "whitelistEnabled"]}
+    ],
+    "com.apple.familycontrols.timelimits.v2": [
+      {"name": "Parental Controls: Time Limits", "keys": ["familyControlsEnabled", "time-limits"]}
+    ],
+    "com.apple.fileproviderd": [
+      {"name": "File Provider", "keys": ["AllowManagedFileProvidersToRequestAttribution", "ManagementAllowsExternalVolumeSyncing", "ManagementAllowsKnownFolderSyncing", "ManagementAllowsRemoteSyncing", "ManagementDomainAutoEnablementList", "ManagementExternalVolumeSyncingAllowList", "ManagementKnownFolderSyncingAllowList", "ManagementRemoteSyncingAllowList"]}
+    ],
+    "com.apple.finder": [
+      {"name": "Finder", "keys": ["InterfaceLevel", "ProhibitBurn", "ProhibitConnectTo", "ProhibitEject", "ProhibitGoToFolder", "ShowExternalHardDrivesOnDesktop", "ShowHardDrivesOnDesktop", "ShowMountedServersOnDesktop", "ShowRemovableMediaOnDesktop", "WarnOnEmptyTrash"]}
+    ],
+    "com.apple.firstactiveethernet.managed": [
+      {"name": "802.1X: First Active Ethernet", "keys": ["ANY"]}
+    ],
+    "com.apple.firstethernet.managed": [
+      {"name": "802.1X: First Ethernet", "keys": ["ANY"]}
+    ],
+    "com.apple.font": [
+      {"name": "Font", "keys": ["Font", "Name"]}
+    ],
+    "com.apple.gamed": [
+      {"name": "Parental Controls: Game Center", "keys": ["GKFeatureAccountModificationAllowed", "GKFeatureAddingGameCenterFriendsAllowed", "GKFeatureGameCenterAllowed", "GKFeatureMultiplayerGamingAllowed"]}
+    ],
+    "com.apple.globalethernet.managed": [
+      {"name": "802.1X: Global Ethernet", "keys": ["ANY"]}
+    ],
+    "com.apple.ldap.account": [
+      {"name": "LDAP", "keys": ["LDAPAccountDescription", "LDAPAccountHostName", "LDAPAccountPassword", "LDAPAccountUseSSL", "LDAPAccountUserName", "LDAPSearchSettings.LDAPSearchSettingDescription", "LDAPSearchSettings.LDAPSearchSettingScope", "LDAPSearchSettings.LDAPSearchSettingSearchBase", "VPNUUID"]}
+    ],
+    "com.apple.loginitems.managed": [
+      {"name": "Login Items: Managed Items", "keys": ["AutoLaunchedApplicationDictionary-managed.Hide", "AutoLaunchedApplicationDictionary-managed.Path"]}
+    ],
+    "com.apple.loginwindow": [
+      {"name": "Login Window", "keys": ["AdminHostInfo", "AllowList", "AutologinPassword", "AutologinUsername", "DenyList", "DisableConsoleAccess", "DisableFDEAutoLogin", "DisableScreenLockImmediate", "HideAdminUsers", "HideLocalUsers", "HideMobileAccounts", "IncludeNetworkUser", "LogOutDisabledWhileLoggedIn", "LoginwindowText", "PowerOffDisabledWhileLoggedIn", "RestartDisabled", "RestartDisabledWhileLoggedIn", "SHOWFULLNAME", "SHOWOTHERUSERS_MANAGED", "ShutDownDisabled", "ShutDownDisabledWhileLoggedIn", "SleepDisabled", "showInputMenu"]}
+    ],
+    "com.apple.lom": [
+      {"name": "Lights Out Management (LOM)", "keys": ["ControllerCACertificateUUIDs", "ControllerCertificateUUID", "DeviceCACertificateUUIDs", "DeviceCertificateUUID"]}
+    ],
+    "com.apple.mcxMenuExtras": [
+      {"name": "Managed Menu Extras", "keys": ["AirPort.menu", "Battery.menu", "Bluetooth.menu", "CPU.menu", "Clock.menu", "Displays.menu", "Eject.menu", "Fax.menu", "HomeSync.menu", "Ink.menu", "IrDA.menu", "PCCard.menu", "PPP.menu", "PPPoE.menu", "RemoteDesktop.menu", "Script Menu.menu", "Spaces.menu", "Sync.menu", "TextInput.menu", "TimeMachine.menu", "UniversalAccess.menu", "User.menu", "VPN.menu", "Volume.menu", "WWAN.menu", "delaySeconds", "iChat.menu", "maxWaitSeconds"]}
+    ],
+    "com.apple.mcxloginscripts": [
+      {"name": "Login Window: Scripts", "keys": ["loginscripts", "logoutscripts", "skipLoginHook", "skipLogoutHook"]}
+    ],
+    "com.apple.mcxprinting": [
+      {"name": "Printing", "keys": ["AllowLocalPrinters", "DefaultPrinter", "FooterFontName", "FooterFontSize", "PrintFooter", "PrintMACAddress", "RequireAdminToAddPrinters", "RequireAdminToPrintLocally", "ShowOnlyManagedPrinters", "UserPrinterList"]}
+    ],
+    "com.apple.mobiledevice.passwordpolicy": [
+      {"name": "Passcode", "keys": ["allowSimple", "changeAtNextAuth", "customRegex", "forcePIN", "maxFailedAttempts", "maxGracePeriod", "maxInactivity", "maxPINAgeInDays", "minComplexChars", "minLength", "minutesUntilFailedLoginReset", "pinHistory", "requireAlphanumeric"]}
+    ],
+    "com.apple.notificationsettings": [
+      {"name": "Notifications", "keys": ["NotificationSettings"]}
+    ],
+    "com.apple.preference.security": [
+      {"name": "Security Preferences", "keys": ["dontAllowFireWallUI", "dontAllowLockMessageUI", "dontAllowPasswordResetUI"]}
+    ],
+    "com.apple.preference.users": [
+      {"name": "User Preferences", "keys": ["DisableUsingiCloudPassword"]}
+    ],
+    "com.apple.profileRemovalPassword": [
+      {"name": "Profile Removal Password", "keys": ["RemovalPassword"]}
+    ],
+    "com.apple.proxy.http.global": [
+      {"name": "Global HTTP Proxy", "keys": ["ProxyCaptiveLoginAllowed", "ProxyPACFallbackAllowed", "ProxyPACURL", "ProxyPassword", "ProxyServer", "ProxyServerPort", "ProxyType", "ProxyUsername"]}
+    ],
+    "com.apple.screensaver": [
+      {"name": "Screensaver", "keys": ["askForPassword", "askForPasswordDelay", "idleTime", "loginWindowModulePath", "moduleName"]}
+    ],
+    "com.apple.screensaver.user": [
+      {"name": "Screensaver User", "keys": ["idleTime", "moduleName", "modulePath"]}
+    ],
+    "com.apple.secondactiveethernet.managed": [
+      {"name": "802.1X: Second Active Ethernet", "keys": ["ANY"]}
+    ],
+    "com.apple.secondethernet.managed": [
+      {"name": "802.1X: Second Ethernet", "keys": ["ANY"]}
+    ],
+    "com.apple.security.FDERecoveryKeyEscrow": [
+      {"name": "FDE Recovery Key Escrow", "keys": ["DeviceKey", "EncryptCertPayloadUUID", "Location"]}
+    ],
+    "com.apple.security.acme": [
+      {"name": "ACME Certificate", "keys": ["AllowAllAppsAccess", "Attest", "ClientIdentifier", "DirectoryURL", "ExtendedKeyUsage.OID", "HardwareBound", "KeyIsExtractable", "KeySize", "KeyType", "Subject", "SubjectAltName.dNSName", "SubjectAltName.ntPrincipalName", "SubjectAltName.rfc822Name", "SubjectAltName.uniformResourceIdentifier", "UsageFlags"]}
+    ],
+    "com.apple.security.firewall": [
+      {"name": "Firewall", "keys": ["AllowSigned", "AllowSignedApp", "Applications.Allowed", "Applications.BundleID", "BlockAllIncoming", "EnableFirewall", "EnableLogging", "EnableStealthMode", "LoggingOption"]}
+    ],
+    "com.apple.security.pem": [
+      {"name": "Certificate (PEM)", "keys": ["PayloadCertificateFileName", "PayloadContent"]}
+    ],
+    "com.apple.security.pkcs1": [
+      {"name": "Certificate (PKCS #1)", "keys": ["PayloadCertificateFileName", "PayloadContent"]}
+    ],
+    "com.apple.security.pkcs12": [
+      {"name": "Certificate (PKCS #12)", "keys": ["AllowAllAppsAccess", "KeyIsExtractable", "Password", "PayloadCertificateFileName", "PayloadContent"]}
+    ],
+    "com.apple.security.root": [
+      {"name": "Certificate (Root)", "keys": ["PayloadCertificateFileName", "PayloadContent"]}
+    ],
+    "com.apple.security.scep": [
+      {"name": "SCEP", "keys": ["PayloadContent.CAFingerprint", "PayloadContent.Challenge", "PayloadContent.Key Type", "PayloadContent.Key Usage", "PayloadContent.Keysize", "PayloadContent.Name", "PayloadContent.Retries", "PayloadContent.RetryDelay", "PayloadContent.Subject", "PayloadContent.SubjectAltName", "PayloadContent.URL"]}
+    ],
+    "com.apple.security.smartcard": [
+      {"name": "SmartCard", "keys": ["UserPairing", "allowSmartCard", "checkCertificateTrust", "enforceSmartCard", "oneCardPerUser", "tokenRemovalAction"]}
+    ],
+    "com.apple.servicemanagement": [
+      {"name": "Service Management - Managed Login Items", "keys": ["Rules.Comment", "Rules.RuleType", "Rules.RuleValue", "Rules.TeamIdentifier"]}
+    ],
+    "com.apple.system-extension-policy": [
+      {"name": "System Extensions", "keys": ["AllowUserOverrides", "AllowedSystemExtensionTypes", "AllowedSystemExtensions", "AllowedTeamIdentifiers", "NonRemovableFromUISystemExtensions", "NonRemovableSystemExtensions", "RemovableSystemExtensions"]}
+    ],
+    "com.apple.system.logging": [
+      {"name": "System Logging", "keys": ["Processes", "Subsystems", "System"]}
+    ],
+    "com.apple.systempolicy.control": [
+      {"name": "System Policy Control", "keys": ["AllowIdentifiedDevelopers", "EnableAssessment", "EnableXProtectMalwareUpload"]}
+    ],
+    "com.apple.systempolicy.managed": [
+      {"name": "System Policy Managed", "keys": ["DisableOverride"]}
+    ],
+    "com.apple.thirdactiveethernet.managed": [
+      {"name": "802.1X: Third Active Ethernet", "keys": ["ANY"]}
+    ],
+    "com.apple.thirdethernet.managed": [
+      {"name": "802.1X: Third Ethernet", "keys": ["ANY"]}
+    ],
+    "com.apple.universalaccess": [
+      {"name": "Accessibility", "keys": ["closeViewFarPoint", "closeViewHotkeysEnabled", "closeViewNearPoint", "closeViewScrollWheelToggle", "closeViewShowPreview", "closeViewSmoothImages", "contrast", "flashScreen", "grayscale", "mouseDriver", "mouseDriverCursorSize", "mouseDriverIgnoreTrackpad", "mouseDriverInitialDelay", "mouseDriverMaxSpeed", "slowKey", "slowKeyBeepOn", "slowKeyDelay", "stereoAsMono", "stickyKey", "stickyKeyBeepOnModifier", "stickyKeyShowWindow", "voiceOverOnOffKey", "whiteOnBlack"]}
+    ],
+    "com.apple.vpn.managed": [
+      {"name": "VPN", "keys": ["AlwaysOn", "DNS", "IKEv2", "IPSec", "IPv4", "PPP", "Proxies", "TransparentProxy", "UserDefinedName", "VPN", "VPNSubType", "VPNType", "VendorConfig"]}
+    ],
+    "com.apple.webcontent-filter": [
+      {"name": "Web Content Filter", "keys": ["AllowListBookmarks", "AutoFilterEnabled", "BlacklistedURLs", "ContentFilterUUID", "DenyListURLs", "FilterBrowsers", "FilterDataProviderBundleIdentifier", "FilterDataProviderDesignatedRequirement", "FilterGrade", "FilterPacketProviderBundleIdentifier", "FilterPacketProviderDesignatedRequirement", "FilterPackets", "FilterSockets", "FilterType", "FilterURLs", "HideDenyListURLs", "Organization", "Password", "PayloadCertificateUUID", "PermittedURLs", "PluginBundleID", "SafariHistoryRetentionEnabled", "ServerAddress", "URLFilterParameters", "UserDefinedName", "UserName", "VendorConfig", "WhitelistedBookmarks"]}
+    ],
+    "com.apple.wifi.managed": [
+      {"name": "Wi-Fi", "keys": ["AllowJoinBeforeFirstUnlock", "AutoJoin", "CaptiveBypass", "DisableAssociationMACRandomization", "DisplayedOperatorName", "DomainName", "EAPClientConfiguration", "EnableIPv6", "EncryptionType", "HESSID", "HIDDEN_NETWORK", "IsHotspot", "MCCAndMNCs", "NAIRealmNames", "Password", "PayloadCertificateUUID", "ProxyPACFallbackAllowed", "ProxyPACURL", "ProxyPassword", "ProxyServer", "ProxyServerPort", "ProxyType", "ProxyUsername", "QoSMarkingPolicy", "RoamingConsortiumOIs", "SSID_STR", "ServiceProviderRoamingEnabled", "SetupModes", "TLSCertificateRequired"]}
+    ],
+    "com.apple.xsan": [
+      {"name": "Xsan", "keys": ["fsnameservers", "sanAuthMethod", "sanConfigURLs", "sanName", "sharedSecret"]}
+    ],
+    "com.apple.xsan.preferences": [
+      {"name": "Xsan Preferences", "keys": ["denyDLC", "denyMount", "onlyMount", "preferDLC", "useDLC"]}
+    ],
+    "loginwindow": [
+      {"name": "Login Window: Login Items", "keys": ["DisableLoginItemsSuppression"]}
+    ]
+  }
+}

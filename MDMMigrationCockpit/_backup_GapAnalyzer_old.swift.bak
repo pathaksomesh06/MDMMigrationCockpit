@@ -1,0 +1,36 @@
+import Foundation
+
+/// Produces the gap report — the single most valuable output of the tool.
+///
+/// Honesty is the product here. Reporting something as translatable when it
+/// isn't is far worse than flagging it for manual rebuild.
+struct GapAnalyzer {
+
+    /// Classify every source profile and explain the reasoning.
+    func analyze(
+        sourceProfiles: [NormalizedProfile],
+        targetProfiles: [NormalizedProfile]
+    ) -> [TranslationResult] {
+        // TODO: for each source profile —
+        //   1. is every payload type in IntuneMapper.supportedPayloadTypes?
+        //   2. does an equivalent already exist in the target?
+        //   3. record concrete notes ("Wi-Fi certificate identity must be
+        //      re-issued via SCEP profile", not "may need review")
+        fatalError("Not implemented")
+    }
+
+    /// Known structural gaps that have no direct Intune equivalent.
+    /// These always land in the report regardless of payload contents.
+    static let knownStructuralGaps: [String] = [
+        "Jamf Policies (event-triggered) — no Intune equivalent; rebuild as scripts or Win32-style app logic",
+        "Jamf Smart Groups with live criteria — Intune dynamic groups use different syntax and evaluation timing",
+        "Jamf Extension Attributes — map to Intune custom attributes, but script output contracts differ",
+        "Self Service branding and layout — no equivalent; Company Portal customization is limited"
+    ]
+
+    /// Export the report for change-board sign-off.
+    func exportMarkdown(_ results: [TranslationResult]) -> String {
+        // TODO: render a table plus a per-profile detail section
+        fatalError("Not implemented")
+    }
+}

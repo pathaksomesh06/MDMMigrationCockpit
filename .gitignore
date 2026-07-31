@@ -1,0 +1,36 @@
+# macOS
+.DS_Store
+
+# Xcode — build products and user state
+build/
+DerivedData/
+*.xcuserstate
+*.xcscmblueprint
+*.xccheckout
+xcuserdata/
+*.moved-aside
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# Swift Package Manager
+.build/
+.swiftpm/
+Packages/
+Package.resolved
+
+# Secrets — this app keeps credentials in the Keychain, but never let a
+# certificate or key that was dropped in for testing get committed.
+*.p8
+*.p12
+*.pem
+*.key
+*.mobileconfig
+.env
+secrets.json
+
+# Editor cruft
+.vscode/
+.idea/
+*.swp

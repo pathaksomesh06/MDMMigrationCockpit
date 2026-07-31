@@ -1,0 +1,24 @@
+import SwiftUI
+
+/// Phase 3 — build waves and reassign devices in ABM.
+/// The only phase that performs consequential writes; every run is gated
+/// behind an explicit confirmation showing the exact device list.
+struct MigrateView: View {
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Migrate")
+                .font(.title2)
+
+            Text("Stage devices into waves and reassign them to the target MDM server.")
+                .foregroundStyle(.secondary)
+
+            // TODO: wave builder, pre-flight results, and a confirmation sheet
+            // that restates device count + target server before executing.
+
+            Spacer()
+        }
+        .padding()
+    }
+}
+
+#Preview { MigrateView() }

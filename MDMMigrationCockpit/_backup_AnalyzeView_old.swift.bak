@@ -1,0 +1,23 @@
+import SwiftUI
+
+/// Phase 2 — export, normalize, diff, and show the gap report.
+/// Read-only: this phase never writes to either MDM.
+struct AnalyzeView: View {
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Analyze")
+                .font(.title2)
+
+            Text("Compare source configuration against the target and identify gaps.")
+                .foregroundStyle(.secondary)
+
+            // TODO: profile list with a translatable / partial / manual badge,
+            // detail pane per profile, and an Export Report action.
+
+            Spacer()
+        }
+        .padding()
+    }
+}
+
+#Preview { AnalyzeView() }

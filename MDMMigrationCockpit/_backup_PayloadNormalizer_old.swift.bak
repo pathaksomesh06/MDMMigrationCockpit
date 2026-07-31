@@ -1,0 +1,21 @@
+import Foundation
+
+/// Converts vendor-specific payloads into the vendor-neutral model.
+///
+/// Everything downstream (diffing, mapping, gap analysis) works only on
+/// NormalizedProfile — no vendor types leak past this layer.
+struct PayloadNormalizer {
+
+    /// Jamf returns a mix of XML plists and JSON depending on the endpoint.
+    func normalizeJamf(_ raw: Data) throws -> NormalizedProfile {
+        // TODO: decode the embedded mobileconfig plist, flatten PayloadContent,
+        // resolve scope from computer groups
+        fatalError("Not implemented")
+    }
+
+    /// Intune's settings catalog uses its own setting-instance schema.
+    func normalizeIntune(_ raw: Data) throws -> NormalizedProfile {
+        // TODO: decode settingsCatalog instances into NormalizedPayload
+        fatalError("Not implemented")
+    }
+}
