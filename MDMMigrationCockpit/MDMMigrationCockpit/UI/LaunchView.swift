@@ -7,11 +7,15 @@ import SwiftUI
 /// opens repeatedly, and a long intro would wear out fast.
 struct LaunchView: View {
 
-    let onChoose: (MigrationDirection) -> Void
+    let onChoose: (MigrationDirection, DevicePlatform) -> Void
 
     @State private var showMark = false
     @State private var showTitle = false
     @State private var showChoices = false
+    /// Platform is chosen alongside direction because it decides which payload
+    /// set, which Jamf endpoints and which Intune catalog the whole session
+    /// uses — Macs and iPhones share almost none of that.
+    @State private var platform: DevicePlatform = .mac
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
@@ -77,7 +81,7 @@ struct LaunchView: View {
                 Text("Migration Cockpit")
                     .font(.system(size: 34, weight: .semibold))
                     .foregroundStyle(Theme.railText)
-                Text("Plan, compare and move Mac fleets between MDMs.")
+                Text("Plan, compare and move Apple fleets between MDMs.")
                     .font(.title3)
                     .foregroundStyle(Theme.railTextMuted)
             }
@@ -86,25 +90,79 @@ struct LaunchView: View {
         }
     }
 
-    // MARK: - Direction
+    // MARK: - Platform & direction
 
     private var choices: some View {
         VStack(spacing: 12) {
-            Text("CHOOSE A MIGRATION")
+            Text("CHOOSE A PLATFORM")
                 .font(.caption.weight(.semibold))
                 .tracking(1.4)
                 .foregroundStyle(Theme.railTextMuted)
 
+            platformPicker
+
+            Text("CHOOSE A MIGRATION")
+                .font(.caption.weight(.semibold))
+                .tracking(1.4)
+                .foregroundStyle(Theme.railTextMuted)
+                .padding(.top, 18)
+
             HStack(alignment: .top, spacing: 14) {
                 ForEach(MigrationDirection.allCases) { direction in
                     DirectionCard(direction: direction) {
-                        onChoose(direction)
+                        onChoose(direction, platform)
                     }
                 }
             }
             // Cards carry different amounts of text; this makes them share the
             // height of the tallest rather than sizing individually.
             .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    /// One platform per session. Running both at once would mean two payload
+    /// catalogs and two sets of MDM endpoints held simultaneously, and a
+    /// settings table that couldn't be honestly labelled.
+    private var platformPicker: some View {
+        HStack(spacing: 12) {
+            ForEach(DevicePlatform.allCases) { candidate in
+                Button {
+                    platform = candidate
+                } label: {
+                    VStack(spacing: 3) {
+                        HStack(spacing: 8) {
+                            Image(systemName: candidate.symbol)
+                                .font(.title3)
+                            Text(candidate.label)
+                                .font(.callout.weight(.medium))
+                        }
+                        // Analysis is Mac-only for now; Migrate and Validate
+                        // work for both. Saying so here beats letting someone
+                        // pick iPad and discover it two screens later.
+                        if candidate != .mac {
+                            Text("Analysis coming soon")
+                                .font(.caption2)
+                                .foregroundStyle(Theme.railTextMuted)
+                        }
+                    }
+                    .foregroundStyle(Theme.railText)
+                    .frame(width: 170)
+                    .padding(.vertical, 10)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12, style: .continuous)
+                            .fill(Color.white.opacity(platform == candidate ? 0.14 : 0.05))
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12, style: .continuous)
+                            .stroke(platform == candidate
+                                    ? Theme.signal.opacity(0.8)
+                                    : Color.white.opacity(0.10),
+                                    lineWidth: platform == candidate ? 1.5 : 1)
+                    )
+                    .contentShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                }
+                .buttonStyle(.plain)
+            }
         }
     }
 }

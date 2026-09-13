@@ -22,12 +22,24 @@ struct ApplePayloadCatalog: Codable {
         let name: String
         let payloadType: String
         let reason: String
+        let platforms: [String]?
+
+        func exists(on platform: DevicePlatform) -> Bool {
+            guard let platforms else { return true }
+            return platforms.contains(platform.appleName)
+        }
     }
 
-    /// A declarative (DDM) configuration Apple defines for macOS.
+    /// A declarative (DDM) configuration Apple defines.
     struct Declaration: Codable {
         let title: String
         let declarationType: String
+        let platforms: [String]?
+
+        func exists(on platform: DevicePlatform) -> Bool {
+            guard let platforms else { return platform == .mac }
+            return platforms.contains(platform.appleName)
+        }
     }
 
     struct Category: Codable {
@@ -41,6 +53,15 @@ struct ApplePayloadCatalog: Codable {
         /// Present only where a payloadType is shared and keys are needed to
         /// tell the payloads apart.
         let keys: [String]?
+        /// Apple platform names this payload exists on. Absent on the vendor
+        /// preference domains the curated file adds by hand (Microsoft apps),
+        /// which are macOS-only.
+        let platforms: [String]?
+
+        func exists(on platform: DevicePlatform) -> Bool {
+            guard let platforms else { return platform == .mac }
+            return platforms.contains(platform.appleName)
+        }
     }
 
     static func load(from bundle: Bundle = .main) throws -> ApplePayloadCatalog {
@@ -80,20 +101,31 @@ struct ApplePayloadCatalog: Codable {
         }
     }
 
-    /// payloadType (lowercased) → why it's deprecated.
-    var deprecationReasons: [String: (name: String, reason: String)] {
+    /// Every payload available on a platform, paired with its category.
+    ///
+    /// The catalog holds both platforms in one file so they can't drift at the
+    /// next Apple release; filtering happens here, at read time.
+    func payloads(on platform: DevicePlatform) -> [(category: String, payload: Payload)] {
+        allPayloads.filter { $0.payload.exists(on: platform) }
+    }
+
+    /// payloadType (lowercased) → why it's deprecated, for one platform.
+    ///
+    /// Filtered because these build their own "safe to drop" rows: a payload
+    /// Apple removed from macOS shouldn't appear in an iPad analysis.
+    func deprecationReasons(on platform: DevicePlatform) -> [String: (name: String, reason: String)] {
         var map: [String: (name: String, reason: String)] = [:]
-        for entry in deprecated ?? [] {
+        for entry in deprecated ?? [] where entry.exists(on: platform) {
             map[entry.payloadType.lowercased()] = (entry.name, entry.reason)
         }
         return map
     }
 
-    /// payloadTypes claimed by more than one payload, which therefore need
-    /// key-level attribution.
-    var sharedPayloadTypes: Set<String> {
+    /// payloadTypes claimed by more than one payload *on this platform*,
+    /// which therefore need key-level attribution.
+    func sharedPayloadTypes(on platform: DevicePlatform) -> Set<String> {
         var counts: [String: Int] = [:]
-        for entry in allPayloads {
+        for entry in payloads(on: platform) {
             guard let type = entry.payload.payloadType?.lowercased() else { continue }
             counts[type, default: 0] += 1
         }
@@ -113,19 +145,31 @@ struct ApplePayloadCatalog: Codable {
         }
     }
 
+    /// A DDM configuration whose type *is* this domain — used when a tenant
+    /// configures a declaration directly, e.g.
+    /// com.apple.configuration.passcode.settings, rather than the legacy
+    /// payload it replaces.
+    func declaration(withType type: String, on platform: DevicePlatform) -> Declaration? {
+        (declarations ?? []).first {
+            $0.exists(on: platform)
+                && $0.declarationType.caseInsensitiveCompare(type) == .orderedSame
+        }
+    }
+
     /// A DDM configuration covering this payload, matched on the payload's
     /// own name rather than its domain — matching on the domain's last
     /// component pairs every *.account payload with the first account
     /// declaration, which is wrong.
-    func declaration(forPayloadNamed name: String) -> Declaration? {
+    func declaration(forPayloadNamed name: String, on platform: DevicePlatform) -> Declaration? {
         let token = name.lowercased()
             .components(separatedBy: CharacterSet.alphanumerics.inverted)
             .joined()
         guard token.count > 3 else { return nil }
         return (declarations ?? []).first {
-            $0.declarationType.lowercased()
-                .components(separatedBy: CharacterSet.alphanumerics.inverted)
-                .contains(token)
+            $0.exists(on: platform)
+                && $0.declarationType.lowercased()
+                    .components(separatedBy: CharacterSet.alphanumerics.inverted)
+                    .contains(token)
         }
     }
 }

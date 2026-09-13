@@ -11,14 +11,17 @@ struct RootView: View {
     @State private var showingMappingTable = false
     /// Nil until the admin picks a migration pair on launch.
     @State private var direction: MigrationDirection?
+    /// Chosen alongside direction; fixed for the session.
+    @State private var platform: DevicePlatform = .mac
 
     var body: some View {
         Group {
             if let direction {
                 cockpit(direction: direction)
             } else {
-                LaunchView { chosen in
-                    withAnimation(.easeInOut(duration: 0.35)) { direction = chosen }
+                LaunchView { chosenDirection, chosenPlatform in
+                    platform = chosenPlatform
+                    withAnimation(.easeInOut(duration: 0.35)) { direction = chosenDirection }
                 }
                 .transition(.opacity)
             }
@@ -47,6 +50,9 @@ struct RootView: View {
         // and system title text is drawn in the standard (dark) colour, which
         // is unreadable against it. Each phase renders its own header instead.
         .onChange(of: app.allConnected) { _, connected in
+            // Never auto-advance on an unreleased platform: sessions restored
+            // in a previous Mac session can still be live in the Keychain.
+            guard platform == .mac else { return }
             guard connected, selection == .connect else { return }
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
                 withAnimation { selection = .analyze }
@@ -72,18 +78,24 @@ struct RootView: View {
 
             VStack(spacing: 2) {
                 ForEach(Phase.allCases) { phase in
+                    // On an unreleased platform only Connect is reachable, and
+                    // it's read-only. Credentials from an earlier Mac session
+                    // stay in the Keychain, so availability alone would leave
+                    // every phase clickable.
+                    let available = app.isAvailable(phase)
+                        && (platform == .mac || phase == .connect)
                     Button {
-                        if app.isAvailable(phase) { selection = phase }
+                        if available { selection = phase }
                     } label: {
                         PhaseRow(
                             phase: phase,
                             state: app.status(for: phase),
-                            isAvailable: app.isAvailable(phase),
+                            isAvailable: available,
                             isSelected: selection == phase
                         )
                     }
                     .buttonStyle(.plain)
-                    .disabled(!app.isAvailable(phase))
+                    .disabled(!available)
                 }
             }
             .padding(.horizontal, 10)
@@ -114,7 +126,7 @@ struct RootView: View {
                 Text("Migration Cockpit")
                     .font(.headline)
                     .foregroundStyle(Theme.railText)
-                Text("\(direction.shortLabel) · via ABM")
+                Text("\(direction.shortLabel) · \(platform.label) · via ABM")
                     .font(.caption2)
                     .foregroundStyle(Theme.railTextMuted)
             }
@@ -128,7 +140,7 @@ struct RootView: View {
                     .foregroundStyle(Theme.railTextMuted)
             }
             .buttonStyle(.plain)
-            .help("Change migration direction")
+            .help("Change migration direction or platform")
         }
         .padding(.horizontal, 14)
         // Clear of the window's traffic-light controls, which sit over the
@@ -139,13 +151,23 @@ struct RootView: View {
 
     @ViewBuilder
     private var detail: some View {
+        // The chosen direction has to be threaded through: these views default
+        // to Jamf → Intune, so omitting it silently analyses the wrong way.
+        let chosen = direction ?? .jamfToIntune
         switch selection {
         case .connect:
-            ConnectView()
+            ConnectView(platform: platform)
+        // Everything past Connect needs credentials that can't be entered and
+        // payload knowledge that isn't published yet, so the flow stops here
+        // for platforms that aren't released.
+        case .some where platform != .mac:
+            comingSoonPhase
         case .analyze where app.isAvailable(.analyze):
-            AnalyzeView()
+            AnalyzeView(direction: chosen, platform: platform)
         case .migrate where app.isAvailable(.migrate):
-            MigrateView()
+            MigrateView(direction: chosen, platform: platform)
+        case .validate where app.isAvailable(.validate):
+            ValidateView(direction: chosen, platform: platform)
         case .some(let phase) where !app.isAvailable(phase):
             PhasePlaceholder(phase: phase, locked: true)
         case .some(let phase):
@@ -153,6 +175,25 @@ struct RootView: View {
         case nil:
             PhasePlaceholder(phase: .connect)
         }
+    }
+
+    /// Shown for every phase past Connect while a platform is unreleased.
+    private var comingSoonPhase: some View {
+        VStack(spacing: 12) {
+            Image(systemName: platform.symbol)
+                .font(.system(size: 34))
+                .foregroundStyle(.tertiary)
+            Text("\(platform.label) — coming soon")
+                .font(.headline)
+            Text("The \(platform.appleName) payload data is in place, but will be released soon. Switch to Mac from the launch screen to continue.")
+                .font(.callout)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: 480)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding()
     }
 
     /// Mapping table provenance, always visible — click to open the full table.
@@ -194,7 +235,7 @@ struct RootView: View {
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
-                .help("View the full Jamf → Intune mapping table")
+                .help("View the migration mapping table")
             } else {
                 Text(app.mappingTableError ?? "Mapping table not loaded")
                     .font(.caption2)
@@ -206,7 +247,7 @@ struct RootView: View {
         .padding(.vertical, 8)
         .sheet(isPresented: $showingMappingTable) {
             if let table = app.mappingTable {
-                MappingTableView(table: table)
+                MappingTableView(table: table, direction: direction ?? .jamfToIntune)
             }
         }
     }

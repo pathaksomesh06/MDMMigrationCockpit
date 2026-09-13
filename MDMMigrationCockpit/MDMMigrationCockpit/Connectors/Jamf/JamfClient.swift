@@ -141,19 +141,25 @@ actor JamfClient {
 
     // MARK: - Configuration profiles (Classic API)
 
-    /// List profiles. The list endpoint returns id + name only — no payloads.
-    func fetchConfigurationProfileList() async throws -> [JamfProfileSummary] {
-        let data = try await get("/JSSResource/osxconfigurationprofiles")
-        return try decode(JamfProfileListResponse.self, from: data).os_x_configuration_profiles
+    /// List profiles for a platform. The list endpoint returns id + name only
+    /// — no payloads.
+    ///
+    /// Macs and mobile devices are entirely separate objects in Jamf, on
+    /// different endpoints. Reading the macOS endpoint during an iPad session
+    /// returns Mac profiles, which then surface as macOS payloads in the
+    /// analysis regardless of any platform filtering downstream.
+    func fetchConfigurationProfileList(platform: DevicePlatform) async throws -> [JamfProfileSummary] {
+        let data = try await get("/JSSResource/\(platform.jamfProfileEndpoint)")
+        return try decode(JamfProfileListResponse.self, from: data).profiles
     }
 
     /// Full profile detail, including the embedded mobileconfig payload.
     ///
     /// The payload arrives as an XML plist string inside the JSON. It must be
     /// parsed separately — see PayloadNormalizer.normalizeJamf.
-    func fetchConfigurationProfile(id: Int) async throws -> JamfProfileDetail {
-        let data = try await get("/JSSResource/osxconfigurationprofiles/id/\(id)")
-        return try decode(JamfProfileDetailResponse.self, from: data).os_x_configuration_profile
+    func fetchConfigurationProfile(id: Int, platform: DevicePlatform) async throws -> JamfProfileDetail? {
+        let data = try await get("/JSSResource/\(platform.jamfProfileEndpoint)/id/\(id)")
+        return try decode(JamfProfileDetailResponse.self, from: data).profile
     }
 
     /// Convenience: list then fetch each profile in full.
@@ -161,10 +167,12 @@ actor JamfClient {
     /// Serialized deliberately rather than run concurrently — a large Jamf
     /// instance plus parallel requests is a good way to get rate limited on the
     /// tenant you're trying not to disturb.
-    func fetchAllConfigurationProfiles() async throws -> [JamfProfileDetail] {
+    func fetchAllConfigurationProfiles(platform: DevicePlatform) async throws -> [JamfProfileDetail] {
         var results: [JamfProfileDetail] = []
-        for summary in try await fetchConfigurationProfileList() {
-            results.append(try await fetchConfigurationProfile(id: summary.id))
+        for summary in try await fetchConfigurationProfileList(platform: platform) {
+            if let detail = try await fetchConfigurationProfile(id: summary.id, platform: platform) {
+                results.append(detail)
+            }
         }
         return results
     }

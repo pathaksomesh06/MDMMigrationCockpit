@@ -8,6 +8,10 @@ struct MigrateView: View {
 
     @EnvironmentObject private var app: AppState
     @StateObject private var model = MigrateViewModel()
+    /// Which way the migration runs, chosen at launch.
+    var direction: MigrationDirection = .jamfToIntune
+    /// Which device platform this session covers, also chosen at launch.
+    var platform: DevicePlatform = .mac
 
     var body: some View {
         Group {
@@ -20,7 +24,19 @@ struct MigrateView: View {
                 content
             }
         }
-        .task { await model.load(app: app) }
+        .task(id: PlatformDirection(direction: direction, platform: platform)) {
+            // The model outlives a direction or platform change, so re-point it
+            // and pull the devices for whichever server is now the source.
+            let wasLoaded = model.state == .loaded
+            let changed = model.direction != direction || model.platform != platform
+            model.direction = direction
+            model.platform = platform
+            await model.load(app: app)
+            if changed && wasLoaded {
+                model.selection = []
+                await model.loadSourceDevices(app: app)
+            }
+        }
         .toolbar {
             Button {
                 Task { await model.refresh(app: app) }
@@ -68,8 +84,10 @@ struct MigrateView: View {
 
     private var content: some View {
         VStack(spacing: 0) {
-            PageHeader(title: "Migrate", subtitle: "Step 3 of 4 · Reassign devices in ABM")
+            PageHeader(title: "Migrate",
+                       subtitle: "Step 3 of 4 · \(direction.shortLabel) · \(platform.label) · Reassign devices in ABM")
             directionBar
+            platformBar
             Divider()
 
             if !model.directionValid {
@@ -90,9 +108,9 @@ struct MigrateView: View {
     private var directionBar: some View {
         HStack(spacing: 14) {
             serverMenu(
-                label: "From",
+                label: "From · \(direction.sourceName)",
                 selection: $model.sourceServerID,
-                placeholder: "Choose source…",
+                placeholder: "Choose \(direction.sourceName) server…",
                 tint: Theme.source,
                 excluding: model.targetServerID
             ) {
@@ -104,9 +122,9 @@ struct MigrateView: View {
                 .font(.title3.weight(.semibold))
 
             serverMenu(
-                label: "To",
+                label: "To · \(direction.targetName)",
                 selection: $model.targetServerID,
-                placeholder: "Choose target…",
+                placeholder: "Choose \(direction.targetName) server…",
                 tint: Theme.target,
                 excluding: model.sourceServerID
             ) {}
@@ -119,6 +137,31 @@ struct MigrateView: View {
                 .disabled(!model.directionValid)
         }
         .padding(12)
+    }
+
+    /// Platform is fixed for the session, so this states what's in scope rather
+    /// than offering a choice — and names what ABM returned that is out of it.
+    private var platformBar: some View {
+        HStack(spacing: 10) {
+            Label("\(model.candidates.count) \(platform.label) device\(model.candidates.count == 1 ? "" : "s") on this server",
+                  systemImage: platform.symbol)
+                .font(.callout)
+                .foregroundStyle(.secondary)
+
+            // Devices on this server that aren't in scope. Named rather than
+            // hidden, so nobody assumes the whole server moved.
+            let others = model.outOfScopeSummary
+            if !others.isEmpty {
+                Label("\(others) not in scope", systemImage: "minus.circle")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .help("This session migrates \(platform.label) only. Other device types on this server are untouched — change platform from the launch screen to work on them.")
+            }
+
+            Spacer()
+        }
+        .padding(.horizontal, 12)
+        .padding(.bottom, 10)
     }
 
     private func serverMenu(
@@ -179,7 +222,7 @@ struct MigrateView: View {
                 .foregroundStyle(.tertiary)
             Text(model.sourceServerID == model.targetServerID && !model.sourceServerID.isEmpty
                  ? "Source and target must be different servers."
-                 : "Choose the source and target MDM servers to see migration candidates.")
+                 : "Tell the app which ABM server is \(direction.sourceName) and which is \(direction.targetName). ABM doesn't record the vendor, so this is set once and then holds for both directions.")
                 .font(.callout)
                 .foregroundStyle(.secondary)
         }
@@ -298,10 +341,10 @@ struct MigrateView: View {
             }
 
             HStack(spacing: 12) {
-                serverCard("From", model.sourceServerName, Theme.source)
+                serverCard("From · \(direction.sourceName)", model.sourceServerName, Theme.source)
                 Image(systemName: "arrow.right")
                     .foregroundStyle(Theme.caution)
-                serverCard("To", model.targetServerName, Theme.target)
+                serverCard("To · \(direction.targetName)", model.targetServerName, Theme.target)
             }
 
             VStack(alignment: .leading, spacing: 4) {

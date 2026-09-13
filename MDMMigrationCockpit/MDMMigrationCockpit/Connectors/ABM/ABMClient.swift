@@ -133,9 +133,20 @@ actor ABMClient {
     }
 
     /// MDM servers registered in ABM — source and target.
+    ///
+    /// Paginated like every other collection: a tenant with more servers than
+    /// one page was previously getting a silently truncated list, which shows
+    /// up as "my MDM isn't in the dropdown".
     func fetchMDMServers() async throws -> [MDMServer] {
-        let data = try await get("/v1/mdmServers")
-        return try decode(JSONAPICollection<MDMServer>.self, from: data).data
+        var servers: [MDMServer] = []
+        var path: String? = "/v1/mdmServers"
+        while let current = path {
+            let data = try await get(current)
+            let page = try decode(JSONAPICollection<MDMServer>.self, from: data)
+            servers.append(contentsOf: page.data)
+            path = Self.nextPagePath(from: page.links?.next)
+        }
+        return servers
     }
 
     /// Devices currently assigned to a given MDM server.

@@ -104,11 +104,21 @@ struct PayloadMapping: Codable {
 }
 
 /// One non-profile object mapping row (scripts, groups, policies...).
+/// A Jamf object with no direct profile equivalent — scripts, policies,
+/// groups, apps. Advice is held per destination, like profile payloads.
 struct ObjectMapping: Codable {
     let jamfObject: String
-    let intuneEquivalent: String?
-    let status: MappingStatus
-    let notes: String
+    let toIntune: PayloadMapping.TargetAdvice?
+    let toJamf: PayloadMapping.TargetAdvice?
+
+    func advice(for direction: MigrationDirection) -> PayloadMapping.TargetAdvice? {
+        direction == .jamfToIntune ? toIntune : toJamf
+    }
+
+    // Convenience accessors for the default (Jamf → Intune) direction.
+    var intuneEquivalent: String? { toIntune?.equivalent }
+    var status: MappingStatus { toIntune?.status ?? .unverified }
+    var notes: String { toIntune?.notes ?? "" }
 }
 
 /// A migration step with end-user visible impact.
@@ -180,21 +190,5 @@ struct IntuneMapper {
     /// Classify a payload without translating it. Used by the gap report.
     func status(for payloadType: String) -> MappingStatus {
         table.mapping(forPayloadType: payloadType)?.status ?? .unverified
-    }
-
-    /// Produce the Intune-shaped request body for a normalized profile.
-    /// Returns nil when the profile cannot be expressed in Intune at all.
-    func map(_ profile: NormalizedProfile) throws -> Data? {
-        // TODO: per-payload mapping into settings catalog setting instances.
-        // Only attempt payloads whose status is .direct or .partial —
-        // .manual and .unverified must never be silently auto-created.
-        fatalError("Not implemented")
-    }
-
-    /// Compare a source profile with the closest existing target profile,
-    /// so migration doesn't duplicate config already present in the target.
-    func diff(source: NormalizedProfile, target: NormalizedProfile) -> [String] {
-        // TODO: return human-readable differences per setting key
-        fatalError("Not implemented")
     }
 }

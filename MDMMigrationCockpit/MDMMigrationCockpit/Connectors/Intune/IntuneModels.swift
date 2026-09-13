@@ -191,3 +191,25 @@ extension SettingValue {
         display.caseInsensitiveCompare(other.display) == .orderedSame
     }
 }
+
+// MARK: - Managed devices (post-migration evidence)
+
+/// A device as Intune currently sees it.
+///
+/// Used by Validate to prove enrolment actually happened: ABM assignment only
+/// states where a device *should* enrol, not that it did.
+struct IntuneManagedDevice: Decodable {
+    let id: String?
+    let deviceName: String?
+    let serialNumber: String?
+    let operatingSystem: String?
+    let osVersion: String?
+    let enrolledDateTime: String?
+    let lastSyncDateTime: String?
+    let complianceState: String?
+    let managementState: String?
+}
+
+struct IntuneManagedDeviceResponse: Decodable {
+    let value: [IntuneManagedDevice]
+}

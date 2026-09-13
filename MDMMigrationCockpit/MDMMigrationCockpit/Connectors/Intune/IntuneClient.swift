@@ -19,6 +19,7 @@ actor IntuneClient {
         case missingPermissions
         case requestFailed(status: Int, body: String)
         case decodingFailed(underlying: Error, rawBody: String)
+        case notImplemented(String)
 
         var errorDescription: String? {
             switch self {
@@ -28,6 +29,8 @@ actor IntuneClient {
                 return "Graph request failed (HTTP \(status)): \(body)"
             case let .decodingFailed(error, raw):
                 return "Failed to decode Graph response: \(error). Raw: \(raw.prefix(500))"
+            case let .notImplemented(detail):
+                return "Not implemented: \(detail)"
             }
         }
     }
@@ -115,19 +118,26 @@ actor IntuneClient {
 
     // MARK: - Settings catalog definitions
 
-    /// Harvest every macOS setting Intune can express, with its category.
+    /// Harvest every setting Intune can express for a platform, with its
+    /// category.
     ///
     /// This is the authoritative answer to "can Intune do this at all, and
     /// where does it live" — it replaces hand-curated mapping guesses and
     /// stays current as Microsoft ships monthly additions.
     ///
-    /// Cached on disk: it's a large fetch and only changes every few weeks.
-    func fetchSettingsCatalog(forceRefresh: Bool = false) async throws -> CatalogIndex {
+    /// Cached on disk per platform: it's a large fetch and only changes every
+    /// few weeks.
+    func fetchSettingsCatalog(for platform: DevicePlatform,
+                              forceRefresh: Bool = false) async throws -> CatalogIndex {
         if !forceRefresh,
-           let cached = CatalogCache.load(),
+           let cached = CatalogCache.load(for: platform),
            CatalogCache.isFresh(cached.fetchedAt) {
             return CatalogIndex(settings: cached.settings)
         }
+
+        // Microsoft's own token for this platform, resolved once so the two
+        // filters below can't drift apart.
+        let token = platform.intunePlatform
 
         // Categories first, so each setting can report where it lives in the
         // picker (notably whether it's under Declarative Device Management).
@@ -137,7 +147,7 @@ actor IntuneClient {
         }
         var categoryNames: [String: String] = [:]
         if let categories = try? await getAllPages(
-            "/deviceManagement/configurationCategories?$filter=platforms%20has%20'macOS'",
+            "/deviceManagement/configurationCategories?$filter=platforms%20has%20'\(token)'",
             as: Category.self
         ) {
             for category in categories {
@@ -153,7 +163,7 @@ actor IntuneClient {
             let categoryId: String?
         }
         let definitions = try await getAllPages(
-            "/deviceManagement/configurationSettings?$filter=applicability/platform%20has%20'macOS'&$select=id,displayName,categoryId",
+            "/deviceManagement/configurationSettings?$filter=applicability/platform%20has%20'\(token)'&$select=id,displayName,categoryId",
             as: Definition.self
         )
 
@@ -167,7 +177,7 @@ actor IntuneClient {
             )
         }
 
-        if !settings.isEmpty { CatalogCache.save(settings) }
+        if !settings.isEmpty { CatalogCache.save(settings, for: platform) }
         return CatalogIndex(settings: settings)
     }
 
@@ -182,21 +192,35 @@ actor IntuneClient {
     ///
     /// Each source is fetched independently: a permission gap on one kind
     /// shouldn't blank the whole comparison.
-    func fetchTargetConfiguration() async throws -> [IntuneConfigItem] {
+    func fetchTargetConfiguration(for platform: DevicePlatform) async throws -> [IntuneConfigItem] {
         var items: [IntuneConfigItem] = []
-        items += (try? await fetchSettingsCatalogItems()) ?? []
-        items += (try? await fetchDeviceConfigurationItems()) ?? []
-        items += (try? await fetchScriptAndComplianceItems()) ?? []
+        items += (try? await fetchSettingsCatalogItems(for: platform)) ?? []
+        items += (try? await fetchDeviceConfigurationItems(for: platform)) ?? []
+        items += (try? await fetchScriptAndComplianceItems(for: platform)) ?? []
         return items
     }
 
     // MARK: Settings catalog
 
-    private func fetchSettingsCatalogItems() async throws -> [IntuneConfigItem] {
+    private func fetchSettingsCatalogItems(for platform: DevicePlatform) async throws -> [IntuneConfigItem] {
         struct CatalogPolicy: Decodable {
             let id: String?
             let name: String?
             let platforms: String?
+        }
+
+        // Tenant responses carry only a settingDefinitionId — no category. The
+        // catalog is what knows that `updatecache` belongs to AutoUpdate and
+        // not to Managed Preferences, so it's loaded first and used as a
+        // lookup. Cached, so this is normally free.
+        _ = try? await fetchSettingsCatalog(for: platform)
+        var categories: [String: String] = [:]
+        if let cached = CatalogCache.load(for: platform) {
+            for setting in cached.settings {
+                if let name = setting.categoryName {
+                    categories[setting.id.lowercased()] = name
+                }
+            }
         }
 
         let policies = try await getAllPages(
@@ -207,15 +231,19 @@ actor IntuneClient {
         var items: [IntuneConfigItem] = []
         for policy in policies {
             guard let id = policy.id, let name = policy.name else { continue }
+            // No permissive fallback for a missing platform field. An item
+            // whose platform can't be read is not evidence that it belongs
+            // here, and letting it through puts macOS policies into an iPad
+            // analysis — where they read as real gaps to migrate.
             let platforms = (policy.platforms ?? "").lowercased()
-            guard platforms.isEmpty || platforms.contains("macos") else { continue }
+            guard platforms.contains(platform.intuneTypeToken) else { continue }
 
             var item = IntuneConfigItem(
                 id: id, name: name, kind: .settingsCatalog, odataType: nil
             )
             // Settings live on a sub-resource, one call per policy.
             if let data = try? await get("/deviceManagement/configurationPolicies/\(id)/settings") {
-                item.payloads = Self.parseCatalogSettings(data)
+                item.payloads = Self.parseCatalogSettings(data, categories: categories)
             }
             items.append(item)
         }
@@ -227,7 +255,11 @@ actor IntuneClient {
     ///
     /// The shape is deeply nested and varies by setting type, so this walks the
     /// JSON generically rather than modelling every variant.
-    static func parseCatalogSettings(_ data: Data) -> [String: [String: SettingValue?]] {
+    /// - Parameter categories: settingDefinitionId (lowercased) → Intune
+    ///   category name, used to attribute vendor application preferences to
+    ///   the product that owns them.
+    static func parseCatalogSettings(_ data: Data,
+                                     categories: [String: String] = [:]) -> [String: [String: SettingValue?]] {
         guard let root = try? JSONSerialization.jsonObject(with: data) else { return [:] }
         var result: [String: [String: SettingValue?]] = [:]
 
@@ -253,7 +285,21 @@ actor IntuneClient {
                     converted = PayloadNormalizer.settingValue(from: value)
                 }
             }
-            result[domain, default: [:]][key] = converted
+            // Intune files vendor application preferences under the
+            // ManagedPreferences payload rather than declaring a domain per
+            // app, so a single "payload" ends up holding 785 settings for
+            // AutoUpdate, Office, OneDrive, Defender and Edge together.
+            //
+            // Where the setting names a known application preference domain,
+            // re-file it there so each app reads as its own payload. The
+            // category is the reliable signal: MAU keys like `updatecache`
+            // carry no hint of the product in the id itself.
+            if let vendor = Self.vendorSplit(domain: domain, key: key,
+                                             categoryName: categories[definitionID.lowercased()]) {
+                result[vendor.domain, default: [:]][vendor.key] = converted
+            } else {
+                result[domain, default: [:]][key] = converted
+            }
         }
 
         func walk(_ node: Any) {
@@ -276,9 +322,107 @@ actor IntuneClient {
         return result
     }
 
+    /// Vendor application preferences that Intune nests inside the
+    /// ManagedPreferences payload, keyed by the fragment that identifies them
+    /// in a setting id.
+    ///
+    /// These are real preference domains in their own right — they're what an
+    /// admin would set in a Jamf custom payload — so they're lifted out
+    /// rather than left buried under Managed Preferences.
+    private static let vendorDomains: [(match: String, domain: String, name: String)] = [
+        ("microsoft autoupdate", "com.microsoft.autoupdate2", "Microsoft AutoUpdate"),
+        ("mau2.0",               "com.microsoft.autoupdate2", "Microsoft AutoUpdate"),
+        ("microsoft defender",   "com.microsoft.wdav",        "Microsoft Defender"),
+        ("microsoft edge",       "com.microsoft.Edge",        "Microsoft Edge"),
+        ("microsoft word",       "com.microsoft.Word",        "Microsoft Word"),
+        ("microsoft excel",      "com.microsoft.Excel",       "Microsoft Excel"),
+        ("microsoft powerpoint", "com.microsoft.Powerpoint",  "Microsoft PowerPoint"),
+        ("microsoft outlook",    "com.microsoft.Outlook",     "Microsoft Outlook"),
+        ("microsoft onenote",    "com.microsoft.onenote.mac", "Microsoft OneNote"),
+        ("microsoft teams",      "com.microsoft.teams2",      "Microsoft Teams"),
+        ("onedrive",             "com.microsoft.OneDrive",    "Microsoft OneDrive"),
+        ("company portal",       "com.microsoft.CompanyPortal", "Intune Company Portal"),
+        // Intune files these under the MAU category rather than giving them
+        // their own, so they follow MAU's domain.
+        ("remote desktop",       "com.microsoft.autoupdate2", "Microsoft AutoUpdate"),
+        ("skype for business",   "com.microsoft.autoupdate2", "Microsoft AutoUpdate"),
+        ("windows app",          "com.microsoft.autoupdate2", "Microsoft AutoUpdate"),
+        // Defender's settings are spread across sub-categories that never name
+        // the product, so each has to be listed to reach the right payload.
+        ("antivirus engine",     "com.microsoft.wdav",        "Microsoft Defender"),
+        ("scheduled scan",       "com.microsoft.wdav",        "Microsoft Defender"),
+        ("network protection",   "com.microsoft.wdav",        "Microsoft Defender"),
+        ("cloud delivered protection", "com.microsoft.wdav",  "Microsoft Defender"),
+        ("tamper protection",    "com.microsoft.wdav",        "Microsoft Defender"),
+        ("endpoint detection and response", "com.microsoft.wdav", "Microsoft Defender"),
+        ("performance profiles", "com.microsoft.wdav",        "Microsoft Defender"),
+    ]
+
+    /// Display names for the domains above, so a lifted-out payload can be
+    /// labelled properly rather than shown as a bare reverse-DNS string.
+    static let vendorDomainNames: [String: String] = {
+        var map: [String: String] = [:]
+        for entry in vendorDomains { map[entry.domain.lowercased()] = entry.name }
+        return map
+    }()
+
+    /// Split a vendor application preference out of the ManagedPreferences
+    /// payload. Returns nil for ordinary settings.
+    ///
+    /// `categoryName` is the reliable signal and is tried first: Microsoft
+    /// files these settings under its own product categories, while the setting
+    /// id often carries no hint of which app it belongs to — Edge policies look
+    /// like `com.apple.managedclient.preferences_ambientauthenticationinprivatemodesenabled`.
+    /// Matching on the key alone left those stranded under Managed Preferences.
+    static func vendorSplit(domain: String, key: String,
+                            categoryName: String? = nil) -> (domain: String, key: String)? {
+        guard domain.lowercased().contains("managedclient.preferences") else { return nil }
+
+        if let category = categoryName?.lowercased(),
+           let hit = vendorDomains.first(where: { category.contains($0.match) }) {
+            return (hit.domain, meaningfulTail(of: key))
+        }
+        return vendorDomain(forKey: key, inDomain: domain)
+    }
+
+    /// Keep only the meaningful tail: everything after the app bundle name,
+    /// e.g. "…microsoft autoupdate.app_manifestserver" → "manifestserver".
+    private static func meaningfulTail(of key: String) -> String {
+        let lower = key.lowercased()
+        if let range = lower.range(of: ".app_") {
+            return String(key[range.upperBound...])
+        }
+        if lower.hasSuffix(".app") {
+            return "Application"
+        }
+        return key
+    }
+
+    /// Split a vendor application preference out of the ManagedPreferences
+    /// payload. Returns nil for ordinary settings.
+    private static func vendorDomain(forKey key: String, inDomain domain: String)
+        -> (domain: String, key: String)? {
+
+        guard domain.lowercased().contains("managedclient.preferences") else { return nil }
+        let lower = key.lowercased()
+        guard let hit = vendorDomains.first(where: { lower.contains($0.match) }) else { return nil }
+
+        // Keep only the meaningful tail: everything after the app bundle name,
+        // e.g. "…microsoft autoupdate.app_manifestserver" → "manifestserver".
+        var tail = key
+        if let range = lower.range(of: ".app_") {
+            tail = String(key[range.upperBound...])
+        } else if lower.hasSuffix(".app") {
+            tail = "Application"
+        } else if let underscore = key.lastIndex(of: "_") {
+            tail = String(key[key.index(after: underscore)...])
+        }
+        return (hit.domain, tail)
+    }
+
     // MARK: Device configurations (including custom mobileconfig profiles)
 
-    private func fetchDeviceConfigurationItems() async throws -> [IntuneConfigItem] {
+    private func fetchDeviceConfigurationItems(for platform: DevicePlatform) async throws -> [IntuneConfigItem] {
         struct DeviceConfig: Decodable {
             let id: String?
             let displayName: String?
@@ -300,7 +444,7 @@ actor IntuneClient {
         for config in configs {
             guard let id = config.id, let name = config.displayName else { continue }
             let type = (config.odataType ?? "").lowercased()
-            guard type.isEmpty || type.contains("macos") else { continue }
+            guard type.contains(platform.intuneTypeToken) else { continue }
 
             let isCustom = type.contains("custom")
             var item = IntuneConfigItem(
@@ -338,7 +482,15 @@ actor IntuneClient {
         for payload in content {
             let type = payload["PayloadType"] as? String ?? "unknown"
             for (key, value) in payload where !key.hasPrefix("Payload") {
-                result[type, default: [:]][key] = PayloadNormalizer.settingValue(from: value)
+                // Same vendor split as the settings-catalog path: a
+                // ManagedPreferences payload can carry another product's
+                // preference domain, and it belongs under that product.
+                if let vendor = vendorDomain(forKey: key, inDomain: type) {
+                    result[vendor.domain, default: [:]][vendor.key] =
+                        PayloadNormalizer.settingValue(from: value)
+                } else {
+                    result[type, default: [:]][key] = PayloadNormalizer.settingValue(from: value)
+                }
             }
         }
         return result
@@ -346,7 +498,7 @@ actor IntuneClient {
 
     // MARK: Scripts and compliance
 
-    private func fetchScriptAndComplianceItems() async throws -> [IntuneConfigItem] {
+    private func fetchScriptAndComplianceItems(for platform: DevicePlatform) async throws -> [IntuneConfigItem] {
         var items: [IntuneConfigItem] = []
 
         struct Named: Decodable {
@@ -377,7 +529,7 @@ actor IntuneClient {
             items += compliance.compactMap { item in
                 guard let id = item.id, let name = item.displayName else { return nil }
                 let type = (item.odataType ?? "").lowercased()
-                guard type.isEmpty || type.contains("macos") else { return nil }
+                guard type.contains(platform.intuneTypeToken) else { return nil }
                 return IntuneConfigItem(id: id, name: name, kind: .compliance, odataType: item.odataType)
             }
         }
@@ -393,20 +545,31 @@ actor IntuneClient {
     }
 
     /// Post-migration: confirm the device actually checked in to Intune.
-    func fetchManagedDevice(serialNumber: String) async throws -> Data {
+    ///
+    /// ABM assignment only says where a device *should* enrol. This is the
+    /// evidence that it did — returns nil when Intune has never seen it.
+    func fetchManagedDevice(serialNumber: String) async throws -> IntuneManagedDevice? {
         let filter = "serialNumber eq '\(serialNumber)'"
             .addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
-        return try await get("/deviceManagement/managedDevices?$filter=\(filter)")
+        let data = try await get("/deviceManagement/managedDevices?$filter=\(filter)")
+        let response = try JSONDecoder().decode(IntuneManagedDeviceResponse.self, from: data)
+        return response.value.first
     }
 
     // MARK: - Write
 
     /// Create a translated profile in the target tenant.
     ///
-    /// ⚠️ Always gated behind explicit user confirmation in the UI. Never called
-    /// automatically as part of analysis.
+    /// Not implemented. The app is read-only against Intune by design: the
+    /// only write it performs anywhere is the ABM device reassignment, which
+    /// is explicitly confirmed by the user. Throws rather than trapping so an
+    /// accidental call surfaces as an error, not a crash.
+    ///
+    /// ⚠️ If this is ever implemented it must be gated behind explicit user
+    /// confirmation in the UI, and never called as part of analysis.
     func createConfigurationPolicy(_ payload: Data) async throws {
-        // TODO: POST /deviceManagement/configurationPolicies
-        fatalError("Not implemented")
+        throw ClientError.notImplemented(
+            "Writing configuration profiles to Intune isn't supported. This app only reads Intune; the sole write operation is ABM device reassignment."
+        )
     }
 }

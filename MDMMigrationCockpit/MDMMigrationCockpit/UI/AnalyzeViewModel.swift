@@ -39,6 +39,8 @@ final class AnalyzeViewModel: ObservableObject {
     @Published var statusFilter: PayloadStatus?
     /// Which way the migration runs; set by the launch screen.
     var direction: MigrationDirection = .jamfToIntune
+    /// Which platform this session covers; also set by the launch screen.
+    var platform: DevicePlatform = .mac
 
     enum MatrixScope: String, CaseIterable, Identifiable {
         case attention  = "Needs attention"
@@ -105,7 +107,7 @@ final class AnalyzeViewModel: ObservableObject {
 
         do {
             state = .loading("Fetching configuration profiles…")
-            profiles = try await jamf.fetchConfigurationProfileList()
+            profiles = try await jamf.fetchConfigurationProfileList(platform: platform)
 
             state = .loading("Fetching scripts…")
             scripts = try await jamf.fetchScripts()
@@ -132,6 +134,20 @@ final class AnalyzeViewModel: ObservableObject {
         }
     }
 
+    /// Load only Intune's settings catalog, skipping the comparison.
+    ///
+    /// Used on platforms whose Apple payload data isn't built yet: Microsoft's
+    /// catalog is real and worth inspecting even when no diff can honestly be
+    /// produced from it. Touches no Jamf endpoints and leaves `analysisState`
+    /// alone, so nothing downstream mistakes this for a completed analysis.
+    func loadCatalogOnly(app: AppState) async {
+        guard let intune = app.intune else {
+            catalog = .unavailable
+            return
+        }
+        catalog = (try? await intune.fetchSettingsCatalog(for: platform)) ?? .unavailable
+    }
+
     func refresh(app: AppState) async {
         state = .idle
         analysisState = .idle
@@ -146,9 +162,12 @@ final class AnalyzeViewModel: ObservableObject {
     // MARK: - Report
 
     /// Migration design document — what stays, what moves, what must be rebuilt.
-    static func markdown(plan: MigrationPlan, table: MappingTable) -> String {
+    static func markdown(plan: MigrationPlan, table: MappingTable,
+                         direction: MigrationDirection) -> String {
+        let source = direction.sourceShortName
+        let target = direction.targetShortName
         var lines: [String] = []
-        lines.append("# Jamf → Intune Migration Plan")
+        lines.append("# \(direction.shortLabel) Migration Plan")
         lines.append("")
         lines.append("Mapping data verified \(table.lastVerified) against \(table.verifiedAgainst).")
         if table.isStale {
@@ -161,10 +180,10 @@ final class AnalyzeViewModel: ObservableObject {
         lines.append("| Outcome | Items |")
         lines.append("|---|---|")
         for bucket in PlanBucket.allCases {
-            lines.append("| \(bucket.rawValue) | \(plan.count(bucket)) |")
+            lines.append("| \(bucket.label(direction)) | \(plan.count(bucket)) |")
         }
         lines.append("")
-        lines.append("Existing macOS configuration in the Intune tenant: \(plan.targetItems.count) items. Settings compared: \(plan.comparedSettingCount).")
+        lines.append("Existing macOS configuration in the \(target) tenant: \(plan.targetItems.count) items. Settings compared: \(plan.comparedSettingCount).")
         lines.append("")
         lines.append("## Build mechanism")
         lines.append("")
@@ -178,11 +197,11 @@ final class AnalyzeViewModel: ObservableObject {
         for bucket in PlanBucket.allCases {
             let items = plan.items(in: bucket)
             guard !items.isEmpty else { continue }
-            lines.append("## \(bucket.rawValue) (\(items.count))")
+            lines.append("## \(bucket.label(direction)) (\(items.count))")
             lines.append("")
-            lines.append("_\(bucket.summary)_")
+            lines.append("_\(bucket.summary(direction))_")
             lines.append("")
-            lines.append("| Payload / object | Build as | Intune target | Same | Differs | Missing |")
+            lines.append("| Payload / object | Build as | \(target) target | Same | Differs | Missing |")
             lines.append("|---|---|---|---|---|---|")
             for item in items {
                 let delivery = item.deliveryIsObserved ? "\(item.delivery.label) (confirmed)" : item.delivery.label
@@ -197,10 +216,10 @@ final class AnalyzeViewModel: ObservableObject {
                 lines.append("### \(item.title) — `\(item.payloadType ?? item.identity)`")
                 lines.append("")
                 if !item.sourceProfiles.isEmpty {
-                    lines.append("From Jamf profiles: \(item.sourceProfiles.joined(separator: ", "))")
+                    lines.append("From \(source) profiles: \(item.sourceProfiles.joined(separator: ", "))")
                     lines.append("")
                 }
-                lines.append("| Setting | Jamf | Intune |")
+                lines.append("| Setting | \(source) | \(target) |")
                 lines.append("|---|---|---|")
                 for comparison in interesting {
                     let target = comparison.outcome == .missing
@@ -244,17 +263,17 @@ final class AnalyzeViewModel: ObservableObject {
 
         do {
             analysisState = .loading("Fetching full profile payloads…")
-            let details = try await jamf.fetchAllConfigurationProfiles()
+            let details = try await jamf.fetchAllConfigurationProfiles(platform: platform)
 
             // Pull the target tenant's actual configuration — settings, not
             // names — so the comparison is evidence-based. Failure here
             // shouldn't sink the analysis; degrade politely.
             if let intune = app.intune {
                 analysisState = .loading("Reading Intune settings catalog (what Intune can express)…")
-                catalog = (try? await intune.fetchSettingsCatalog()) ?? .unavailable
+                catalog = (try? await intune.fetchSettingsCatalog(for: platform)) ?? .unavailable
 
                 analysisState = .loading("Reading Intune configuration (settings-level)…")
-                targetItems = (try? await intune.fetchTargetConfiguration()) ?? []
+                targetItems = (try? await intune.fetchTargetConfiguration(for: platform)) ?? []
                 intunePolicyNames = targetItems.map(\.name)
             }
 
@@ -268,28 +287,33 @@ final class AnalyzeViewModel: ObservableObject {
                 targetProfileNames: intunePolicyNames
             )
 
-            // The tenant-wide plan: every Jamf capability, compared key by key.
-            plan = MigrationPlanBuilder(table: table).build(
-                profiles: normalized,
-                scripts: scripts,
-                extensionAttributes: extensionAttributes,
-                policies: policies,
-                packages: packages,
-                target: TargetIndex(items: targetItems),
-                catalog: catalog
-            )
-
             // Both tenants are loaded into the same shape so the comparison
             // can run either way round.
             let jamfIndex = TargetIndex(jamfProfiles: normalized)
             let intuneIndex = TargetIndex(items: targetItems)
             let sourceIndex = direction == .jamfToIntune ? jamfIndex : intuneIndex
             let targetIndex = direction == .jamfToIntune ? intuneIndex : jamfIndex
+            let jamfIsSource = direction == .jamfToIntune
+
+            // The tenant-wide plan: every source capability, compared key by key.
+            // Scripts, extension attributes, policies and packages are Jamf
+            // object types — passed only when Jamf is the source. The Intune
+            // side gets its own treatment rather than a forced equivalence.
+            plan = MigrationPlanBuilder(table: table, direction: direction).build(
+                source: sourceIndex,
+                scripts: jamfIsSource ? scripts : [],
+                extensionAttributes: jamfIsSource ? extensionAttributes : [],
+                policies: jamfIsSource ? policies : [],
+                packages: jamfIsSource ? packages : [],
+                target: targetIndex,
+                catalog: catalog
+            )
 
             matrix = CapabilityMatrixBuilder(
                 table: table,
                 appleCatalog: (try? ApplePayloadCatalog.load()) ?? .empty,
                 keyCatalog: (try? PayloadKeyCatalog.load()) ?? .empty,
+                platform: platform,
                 direction: direction
             ).build(
                 planItems: direction == .jamfToIntune ? plan.items : [],
@@ -298,7 +322,7 @@ final class AnalyzeViewModel: ObservableObject {
                 catalog: catalog
             )
 
-            reportMarkdown = Self.markdown(plan: plan, table: table)
+            reportMarkdown = Self.markdown(plan: plan, table: table, direction: direction)
             analysisState = .loaded
             AppLogger.analyze.info("Migration plan: \(self.plan.items.count) items, \(self.plan.comparedSettingCount) settings compared, catalog has \(self.catalog.settingCount) macOS definitions")
         } catch {

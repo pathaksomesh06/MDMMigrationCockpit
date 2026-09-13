@@ -1,266 +1,1383 @@
 {
-  "schemaVersion": 4,
-  "source": "apple/device-management (release branch) + Apple Developer payload documentation",
-  "sourceURL": "https://github.com/apple/device-management",
-  "lastVerified": "2026-07-30",
-  "note": "macOS-only payloads, taken from Apple's own machine-readable schemas. 'keys' lists the settings each payload owns, which is what disambiguates payloads sharing a payloadType (com.apple.MCX backs six different payloads, com.apple.extensiblesso two). 'declarations' lists the DDM configurations Apple defines for macOS.",
-  "deprecated": [
-    {"name": "AIM Account", "payloadType": "com.apple.AIM.account", "reason": "Deprecated or removed by Apple — don't carry it across."},
-    {"name": "Content Caching", "payloadType": "com.apple.AssetCache.managed", "reason": "ContentCachingService is marked deprecated in Apple's documentation. Don't carry it across."},
-    {"name": "FDE Recovery Key Redirection", "payloadType": "com.apple.security.FDERecoveryRedirect", "reason": "Deprecated or removed by Apple — don't carry it across."},
-    {"name": "Identification", "payloadType": "com.apple.configurationprofile.identification", "reason": "Deprecated or removed by Apple — don't carry it across."},
-    {"name": "Jabber Account", "payloadType": "com.apple.jabber.account", "reason": "Deprecated or removed by Apple — don't carry it across."},
-    {"name": "Media Management: Allowed Media", "payloadType": "com.apple.systemuiserver", "reason": "Deprecated or removed by Apple — don't carry it across."},
-    {"name": "Parental Control: Dictation and Profanity", "payloadType": "com.apple.ironwood.support", "reason": "Deprecated or removed by Apple — don't carry it across."},
-    {"name": "Parental Controls: Application Restrictions", "payloadType": "com.apple.applicationaccess.new", "reason": "Deprecated or removed by Apple — don't carry it across."},
-    {"name": "Parental Controls: Dashboard Widget Restrictions", "payloadType": "com.apple.dashboard", "reason": "Dashboard was removed in macOS 10.15 Catalina. Configuring it has no effect."},
-    {"name": "ShareKit", "payloadType": "com.apple.ShareKitHelper", "reason": "Deprecated or removed by Apple — don't carry it across."},
-    {"name": "System Policy - Kernel Extensions", "payloadType": "com.apple.syspolicy.kernel-extension-policy", "reason": "Kernel extensions are deprecated by Apple in favour of system extensions. Don't carry this across."},
-    {"name": "System Preferences", "payloadType": "com.apple.systempreferences", "reason": "Deprecated or removed by Apple — don't carry it across."}
-  ],
-  "declarations": [
-    {"title": "Account:CalDAV", "declarationType": "com.apple.configuration.account.caldav"},
-    {"title": "Account:CardDAV", "declarationType": "com.apple.configuration.account.carddav"},
-    {"title": "Account:Exchange", "declarationType": "com.apple.configuration.account.exchange"},
-    {"title": "Account:Google", "declarationType": "com.apple.configuration.account.google"},
-    {"title": "Account:LDAP", "declarationType": "com.apple.configuration.account.ldap"},
-    {"title": "Account:Mail", "declarationType": "com.apple.configuration.account.mail"},
-    {"title": "Account:Subscribed Calendar", "declarationType": "com.apple.configuration.account.subscribed-calendar"},
-    {"title": "App:Managed", "declarationType": "com.apple.configuration.app.managed"},
-    {"title": "Disk Management:Settings", "declarationType": "com.apple.configuration.diskmanagement.settings"},
-    {"title": "External Intelligence Settings", "declarationType": "com.apple.configuration.external-intelligence.settings"},
-    {"title": "Intelligence Settings", "declarationType": "com.apple.configuration.intelligence.settings"},
-    {"title": "Keyboard Settings", "declarationType": "com.apple.configuration.keyboard.settings"},
-    {"title": "Legacy Interactive Profile", "declarationType": "com.apple.configuration.legacy.interactive"},
-    {"title": "Legacy Profile", "declarationType": "com.apple.configuration.legacy"},
-    {"title": "Management:Status Subscriptions", "declarationType": "com.apple.configuration.management.status-subscriptions"},
-    {"title": "Management:Test", "declarationType": "com.apple.configuration.management.test"},
-    {"title": "Math Settings", "declarationType": "com.apple.configuration.math.settings"},
-    {"title": "Migration Assistant Settings", "declarationType": "com.apple.configuration.migration-assistant.settings"},
-    {"title": "Package", "declarationType": "com.apple.configuration.package"},
-    {"title": "Passcode:Settings", "declarationType": "com.apple.configuration.passcode.settings"},
-    {"title": "Safari:Bookmarks", "declarationType": "com.apple.configuration.safari.bookmarks"},
-    {"title": "Safari:Extension Settings", "declarationType": "com.apple.configuration.safari.extensions.settings"},
-    {"title": "Safari:Settings", "declarationType": "com.apple.configuration.safari.settings"},
-    {"title": "Screen Sharing:Connection", "declarationType": "com.apple.configuration.screensharing.connection"},
-    {"title": "Screen Sharing:Connection Group", "declarationType": "com.apple.configuration.screensharing.connection.group"},
-    {"title": "Screen Sharing:Host Settings", "declarationType": "com.apple.configuration.screensharing.host.settings"},
-    {"title": "Security:Certificate", "declarationType": "com.apple.configuration.security.certificate"},
-    {"title": "Security:Identity", "declarationType": "com.apple.configuration.security.identity"},
-    {"title": "Security:Passkey:Attestation", "declarationType": "com.apple.configuration.security.passkey.attestation"},
-    {"title": "Services Background Tasks", "declarationType": "com.apple.configuration.services.background-tasks"},
-    {"title": "Services Configuration Files", "declarationType": "com.apple.configuration.services.configuration-files"},
-    {"title": "Siri Settings", "declarationType": "com.apple.configuration.siri.settings"},
-    {"title": "Software Update:Enforcement:Specific", "declarationType": "com.apple.configuration.softwareupdate.enforcement.specific"},
-    {"title": "Software Update:Settings", "declarationType": "com.apple.configuration.softwareupdate.settings"}
-  ],
-  "categories": [
+ "schemaVersion": 3,
+ "source": "apple/device-management (release branch) + Apple Developer payload documentation",
+ "sourceURL": "https://github.com/apple/device-management",
+ "lastVerified": "2026-08-03",
+ "note": "macOS-only payloads, taken from Apple's own machine-readable schemas. 'keys' lists the settings each payload owns, which is what disambiguates payloads sharing a payloadType (com.apple.MCX backs six different payloads, com.apple.extensiblesso two). 'declarations' lists the DDM configurations Apple defines for macOS. The 'Microsoft applications' category is not from Apple: those are vendor preference domains that Intune nests inside the ManagedPreferences payload, listed separately here because that is how they are built and compared in practice.",
+ "deprecated": [
+  {
+   "name": "AIM Account",
+   "payloadType": "com.apple.AIM.account",
+   "reason": "Deprecated or removed by Apple \u2014 don't carry it across.",
+   "platforms": [
+    "macOS"
+   ]
+  },
+  {
+   "name": "Content Caching",
+   "payloadType": "com.apple.AssetCache.managed",
+   "reason": "ContentCachingService is marked deprecated in Apple's documentation. Don't carry it across.",
+   "platforms": [
+    "macOS"
+   ]
+  },
+  {
+   "name": "FDE Recovery Key Redirection",
+   "payloadType": "com.apple.security.FDERecoveryRedirect",
+   "reason": "Deprecated or removed by Apple \u2014 don't carry it across.",
+   "platforms": [
+    "macOS"
+   ]
+  },
+  {
+   "name": "Identification",
+   "payloadType": "com.apple.configurationprofile.identification",
+   "reason": "Deprecated or removed by Apple \u2014 don't carry it across.",
+   "platforms": [
+    "macOS"
+   ]
+  },
+  {
+   "name": "Jabber Account",
+   "payloadType": "com.apple.jabber.account",
+   "reason": "Deprecated or removed by Apple \u2014 don't carry it across.",
+   "platforms": [
+    "macOS"
+   ]
+  },
+  {
+   "name": "Media Management: Allowed Media",
+   "payloadType": "com.apple.systemuiserver",
+   "reason": "Deprecated or removed by Apple \u2014 don't carry it across.",
+   "platforms": [
+    "macOS"
+   ]
+  },
+  {
+   "name": "Parental Control: Dictation and Profanity",
+   "payloadType": "com.apple.ironwood.support",
+   "reason": "Deprecated or removed by Apple \u2014 don't carry it across.",
+   "platforms": [
+    "macOS"
+   ]
+  },
+  {
+   "name": "Parental Controls: Application Restrictions",
+   "payloadType": "com.apple.applicationaccess.new",
+   "reason": "Deprecated or removed by Apple \u2014 don't carry it across.",
+   "platforms": [
+    "macOS"
+   ]
+  },
+  {
+   "name": "Parental Controls: Dashboard Widget Restrictions",
+   "payloadType": "com.apple.dashboard",
+   "reason": "Dashboard was removed in macOS 10.15 Catalina. Configuring it has no effect.",
+   "platforms": [
+    "macOS"
+   ]
+  },
+  {
+   "name": "ShareKit",
+   "payloadType": "com.apple.ShareKitHelper",
+   "reason": "Deprecated or removed by Apple \u2014 don't carry it across.",
+   "platforms": [
+    "macOS"
+   ]
+  },
+  {
+   "name": "System Policy - Kernel Extensions",
+   "payloadType": "com.apple.syspolicy.kernel-extension-policy",
+   "reason": "Kernel extensions are deprecated by Apple in favour of system extensions. Don't carry this across.",
+   "platforms": [
+    "macOS"
+   ]
+  },
+  {
+   "name": "System Preferences",
+   "payloadType": "com.apple.systempreferences",
+   "reason": "Deprecated or removed by Apple \u2014 don't carry it across.",
+   "platforms": [
+    "macOS"
+   ]
+  }
+ ],
+ "declarations": [
+  {
+   "title": "Account:CalDAV",
+   "declarationType": "com.apple.configuration.account.caldav",
+   "platforms": [
+    "macOS",
+    "iOS"
+   ]
+  },
+  {
+   "title": "Account:CardDAV",
+   "declarationType": "com.apple.configuration.account.carddav",
+   "platforms": [
+    "macOS",
+    "iOS"
+   ]
+  },
+  {
+   "title": "Account:Exchange",
+   "declarationType": "com.apple.configuration.account.exchange",
+   "platforms": [
+    "macOS",
+    "iOS"
+   ]
+  },
+  {
+   "title": "Account:Google",
+   "declarationType": "com.apple.configuration.account.google",
+   "platforms": [
+    "macOS",
+    "iOS"
+   ]
+  },
+  {
+   "title": "Account:LDAP",
+   "declarationType": "com.apple.configuration.account.ldap",
+   "platforms": [
+    "macOS",
+    "iOS"
+   ]
+  },
+  {
+   "title": "Account:Mail",
+   "declarationType": "com.apple.configuration.account.mail",
+   "platforms": [
+    "macOS",
+    "iOS"
+   ]
+  },
+  {
+   "title": "Account:Subscribed Calendar",
+   "declarationType": "com.apple.configuration.account.subscribed-calendar",
+   "platforms": [
+    "macOS",
+    "iOS"
+   ]
+  },
+  {
+   "title": "App:Managed",
+   "declarationType": "com.apple.configuration.app.managed",
+   "platforms": [
+    "macOS",
+    "iOS"
+   ]
+  },
+  {
+   "title": "Disk Management:Settings",
+   "declarationType": "com.apple.configuration.diskmanagement.settings",
+   "platforms": [
+    "macOS"
+   ]
+  },
+  {
+   "title": "External Intelligence Settings",
+   "declarationType": "com.apple.configuration.external-intelligence.settings",
+   "platforms": [
+    "macOS",
+    "iOS"
+   ]
+  },
+  {
+   "title": "Intelligence Settings",
+   "declarationType": "com.apple.configuration.intelligence.settings",
+   "platforms": [
+    "macOS",
+    "iOS"
+   ]
+  },
+  {
+   "title": "Keyboard Settings",
+   "declarationType": "com.apple.configuration.keyboard.settings",
+   "platforms": [
+    "macOS",
+    "iOS"
+   ]
+  },
+  {
+   "title": "Legacy Interactive Profile",
+   "declarationType": "com.apple.configuration.legacy.interactive",
+   "platforms": [
+    "macOS",
+    "iOS"
+   ]
+  },
+  {
+   "title": "Legacy Profile",
+   "declarationType": "com.apple.configuration.legacy",
+   "platforms": [
+    "macOS",
+    "iOS"
+   ]
+  },
+  {
+   "title": "Management:Status Subscriptions",
+   "declarationType": "com.apple.configuration.management.status-subscriptions",
+   "platforms": [
+    "macOS",
+    "iOS"
+   ]
+  },
+  {
+   "title": "Management:Test",
+   "declarationType": "com.apple.configuration.management.test",
+   "platforms": [
+    "macOS",
+    "iOS"
+   ]
+  },
+  {
+   "title": "Math Settings",
+   "declarationType": "com.apple.configuration.math.settings",
+   "platforms": [
+    "macOS",
+    "iOS"
+   ]
+  },
+  {
+   "title": "Migration Assistant Settings",
+   "declarationType": "com.apple.configuration.migration-assistant.settings",
+   "platforms": [
+    "macOS"
+   ]
+  },
+  {
+   "title": "Package",
+   "declarationType": "com.apple.configuration.package",
+   "platforms": [
+    "macOS"
+   ]
+  },
+  {
+   "title": "Passcode:Settings",
+   "declarationType": "com.apple.configuration.passcode.settings",
+   "platforms": [
+    "macOS",
+    "iOS"
+   ]
+  },
+  {
+   "title": "Safari:Bookmarks",
+   "declarationType": "com.apple.configuration.safari.bookmarks",
+   "platforms": [
+    "macOS",
+    "iOS"
+   ]
+  },
+  {
+   "title": "Safari:Extension Settings",
+   "declarationType": "com.apple.configuration.safari.extensions.settings",
+   "platforms": [
+    "macOS",
+    "iOS"
+   ]
+  },
+  {
+   "title": "Safari:Settings",
+   "declarationType": "com.apple.configuration.safari.settings",
+   "platforms": [
+    "macOS",
+    "iOS"
+   ]
+  },
+  {
+   "title": "Screen Sharing:Connection",
+   "declarationType": "com.apple.configuration.screensharing.connection",
+   "platforms": [
+    "macOS"
+   ]
+  },
+  {
+   "title": "Screen Sharing:Connection Group",
+   "declarationType": "com.apple.configuration.screensharing.connection.group",
+   "platforms": [
+    "macOS"
+   ]
+  },
+  {
+   "title": "Screen Sharing:Host Settings",
+   "declarationType": "com.apple.configuration.screensharing.host.settings",
+   "platforms": [
+    "macOS"
+   ]
+  },
+  {
+   "title": "Security:Certificate",
+   "declarationType": "com.apple.configuration.security.certificate",
+   "platforms": [
+    "macOS",
+    "iOS"
+   ]
+  },
+  {
+   "title": "Security:Identity",
+   "declarationType": "com.apple.configuration.security.identity",
+   "platforms": [
+    "macOS",
+    "iOS"
+   ]
+  },
+  {
+   "title": "Security:Passkey:Attestation",
+   "declarationType": "com.apple.configuration.security.passkey.attestation",
+   "platforms": [
+    "macOS",
+    "iOS"
+   ]
+  },
+  {
+   "title": "Services Background Tasks",
+   "declarationType": "com.apple.configuration.services.background-tasks",
+   "platforms": [
+    "macOS"
+   ]
+  },
+  {
+   "title": "Services Configuration Files",
+   "declarationType": "com.apple.configuration.services.configuration-files",
+   "platforms": [
+    "macOS"
+   ]
+  },
+  {
+   "title": "Siri Settings",
+   "declarationType": "com.apple.configuration.siri.settings",
+   "platforms": [
+    "macOS",
+    "iOS"
+   ]
+  },
+  {
+   "title": "Software Update:Enforcement:Specific",
+   "declarationType": "com.apple.configuration.softwareupdate.enforcement.specific",
+   "platforms": [
+    "macOS",
+    "iOS"
+   ]
+  },
+  {
+   "title": "Software Update:Settings",
+   "declarationType": "com.apple.configuration.softwareupdate.settings",
+   "platforms": [
+    "macOS",
+    "iOS"
+   ]
+  }
+ ],
+ "categories": [
+  {
+   "name": "Accounts",
+   "payloads": [
     {
-      "name": "Accounts",
-      "payloads": [
-        {"name": "Accounts", "payloadType": "com.apple.MCX", "keys": ["EnableGuestAccount", "DisableGuestAccount"]},
-        {"name": "CalDAV", "payloadType": "com.apple.caldav.account"},
-        {"name": "CardDAV", "payloadType": "com.apple.carddav.account"},
-        {"name": "LDAP", "payloadType": "com.apple.ldap.account"},
-        {"name": "Mobile Accounts", "payloadType": "com.apple.MCX", "keys": ["com.apple.cachedaccounts.CreateAtLogin", "com.apple.cachedaccounts.WarnOnCreate", "cachedaccounts.WarnOnCreate.allowNever", "cachedaccounts.expiry.delete.disusedSeconds", "cachedaccounts.askForSecureTokenAuthBypass"]}
-      ]
+     "name": "Accounts",
+     "payloadType": "com.apple.MCX",
+     "keys": [
+      "EnableGuestAccount",
+      "DisableGuestAccount"
+     ],
+     "platforms": [
+      "macOS"
+     ]
     },
     {
-      "name": "AirPlay",
-      "payloads": [
-        {"name": "AirPlay", "payloadType": "com.apple.airplay"}
-      ]
+     "name": "CalDAV",
+     "payloadType": "com.apple.caldav.account",
+     "platforms": [
+      "macOS",
+      "iOS"
+     ]
     },
     {
-      "name": "App management",
-      "payloads": [
-        {"name": "Associated Domains", "payloadType": "com.apple.associated-domains"},
-        {"name": "Autonomous Single App Mode", "payloadType": "com.apple.asam"},
-        {"name": "NSExtension Management", "payloadType": "com.apple.NSExtension"}
-      ]
+     "name": "CardDAV",
+     "payloadType": "com.apple.carddav.account",
+     "platforms": [
+      "macOS",
+      "iOS"
+     ]
     },
     {
-      "name": "App Store",
-      "payloads": [
-        {"name": "App Store", "payloadType": "com.apple.appstore"}
-      ]
+     "name": "LDAP",
+     "payloadType": "com.apple.ldap.account",
+     "platforms": [
+      "macOS",
+      "iOS"
+     ]
     },
     {
-      "name": "Authentication",
-      "payloads": [
-        {"name": "Directory Service", "payloadType": "com.apple.DirectoryService.managed"},
-        {"name": "Extensible Single Sign-On", "payloadType": "com.apple.extensiblesso", "keys": ["ExtensionIdentifier", "TeamIdentifier", "Type", "Realm", "ExtensionData", "URLs", "Hosts", "ScreenLockedBehavior", "DeniedBundleIdentifiers", "AuthenticationMethod", "RegistrationToken", "PlatformSSO"]},
-        {"name": "Extensible Single Sign-On (Kerberos)", "payloadType": "com.apple.extensiblesso", "keys": ["ExtensionIdentifier", "TeamIdentifier", "Type", "Realm", "ExtensionData", "Hosts"]}
-      ]
+     "name": "Mobile Accounts",
+     "payloadType": "com.apple.MCX",
+     "keys": [
+      "cachedaccounts.WarnOnCreate.allowNever",
+      "cachedaccounts.expiry.delete.disusedSeconds",
+      "cachedaccounts.askForSecureTokenAuthBypass"
+     ],
+     "platforms": [
+      "macOS"
+     ]
     },
     {
-      "name": "Certificates",
-      "payloads": [
-        {"name": "ACME Certificate", "payloadType": "com.apple.security.acme"},
-        {"name": "Certificate (PEM)", "payloadType": "com.apple.security.pem"},
-        {"name": "Certificate (PKCS #1)", "payloadType": "com.apple.security.pkcs1"},
-        {"name": "Certificate (PKCS #12)", "payloadType": "com.apple.security.pkcs12"},
-        {"name": "Certificate (Root)", "payloadType": "com.apple.security.root"},
-        {"name": "SCEP", "payloadType": "com.apple.security.scep"}
-      ]
+     "name": "Exchange ActiveSync",
+     "payloadType": "com.apple.eas.account",
+     "platforms": [
+      "iOS"
+     ]
     },
     {
-      "name": "Ethernet",
-      "payloads": [
-        {"name": "802.1X: First Active Ethernet", "payloadType": "com.apple.firstactiveethernet.managed"},
-        {"name": "802.1X: First Ethernet", "payloadType": "com.apple.firstethernet.managed"},
-        {"name": "802.1X: Global Ethernet", "payloadType": "com.apple.globalethernet.managed"},
-        {"name": "802.1X: Second Active Ethernet", "payloadType": "com.apple.secondactiveethernet.managed"},
-        {"name": "802.1X: Second Ethernet", "payloadType": "com.apple.secondethernet.managed"},
-        {"name": "802.1X: Third Active Ethernet", "payloadType": "com.apple.thirdactiveethernet.managed"},
-        {"name": "802.1X: Third Ethernet", "payloadType": "com.apple.thirdethernet.managed"}
-      ]
+     "name": "Google Account",
+     "payloadType": "com.apple.google-oauth",
+     "platforms": [
+      "iOS"
+     ]
     },
     {
-      "name": "FileVault",
-      "payloads": [
-        {"name": "FDE FileVault", "payloadType": "com.apple.MCX.FileVault2"},
-        {"name": "FDE FileVault Options", "payloadType": "com.apple.MCX", "keys": ["dontAllowFDEDisable", "dontAllowFDEEnable", "DestroyFVKeyOnStandby"]},
-        {"name": "FDE Recovery Key Escrow", "payloadType": "com.apple.security.FDERecoveryKeyEscrow"}
-      ]
+     "name": "Mail",
+     "payloadType": "com.apple.mail.managed",
+     "platforms": [
+      "macOS",
+      "iOS"
+     ]
     },
     {
-      "name": "Login",
-      "payloads": [
-        {"name": "Login Items: Managed Items", "payloadType": "com.apple.loginitems.managed"},
-        {"name": "Login Window", "payloadType": "com.apple.loginwindow"},
-        {"name": "Login Window: Login Items", "payloadType": "loginwindow"},
-        {"name": "Login Window: Scripts", "payloadType": "com.apple.mcxloginscripts"},
-        {"name": "Service Management - Managed Login Items", "payloadType": "com.apple.servicemanagement"}
-      ]
+     "name": "macOS Server Account",
+     "payloadType": "com.apple.osxserver.account",
+     "platforms": [
+      "iOS"
+     ]
     },
     {
-      "name": "Managed devices",
-      "payloads": [
-        {"name": "Lights Out Management (LOM)", "payloadType": "com.apple.lom"},
-        {"name": "Managed Preferences", "payloadType": "com.apple.ManagedClient.preferences"},
-        {"name": "Profile Removal Password", "payloadType": "com.apple.profileRemovalPassword"}
-      ]
-    },
-    {
-      "name": "Media management",
-      "payloads": [
-        {"name": "Media Management: Disc Burning", "payloadType": "com.apple.DiscRecording"}
-      ]
-    },
-    {
-      "name": "Networking",
-      "payloads": [
-        {"name": "DNS Settings", "payloadType": "com.apple.dnsSettings.managed"},
-        {"name": "Domains", "payloadType": "com.apple.domains"},
-        {"name": "Firewall", "payloadType": "com.apple.security.firewall"},
-        {"name": "Wi-Fi", "payloadType": "com.apple.wifi.managed"},
-        {"name": "Wi-Fi Managed Settings", "payloadType": "com.apple.MCX", "keys": ["RequireAdminForIBSS", "RequireAdminForAirPortNetworkChange", "RequireAdminToTurnAirPortOnOff"]}
-      ]
-    },
-    {
-      "name": "Parental controls",
-      "payloads": [
-        {"name": "Parental Controls: Content Filter", "payloadType": "com.apple.familycontrols.contentfilter"},
-        {"name": "Parental Controls: Dictionary", "payloadType": "com.apple.Dictionary"},
-        {"name": "Parental Controls: Game Center", "payloadType": "com.apple.gamed"},
-        {"name": "Parental Controls: Time Limits", "payloadType": "com.apple.familycontrols.timelimits.v2"}
-      ]
-    },
-    {
-      "name": "Preferences",
-      "payloads": [
-        {"name": "Global Preferences", "payloadType": ".GlobalPreferences"},
-        {"name": "User Preferences", "payloadType": "com.apple.preference.users"}
-      ]
-    },
-    {
-      "name": "Printing",
-      "payloads": [
-        {"name": "AirPrint", "payloadType": "com.apple.airprint"},
-        {"name": "Printing", "payloadType": "com.apple.mcxprinting"}
-      ]
-    },
-    {
-      "name": "Privacy",
-      "payloads": [
-        {"name": "Privacy Preferences Policy Control", "payloadType": "com.apple.TCC.configuration-profile-policy"}
-      ]
-    },
-    {
-      "name": "Proxies",
-      "payloads": [
-        {"name": "DNS Proxy", "payloadType": "com.apple.dnsProxy.managed"},
-        {"name": "Global HTTP Proxy", "payloadType": "com.apple.proxy.http.global"},
-        {"name": "Network Proxy Configuration", "payloadType": "com.apple.SystemConfiguration"}
-      ]
-    },
-    {
-      "name": "Restrictions",
-      "payloads": [
-        {"name": "Restrictions", "payloadType": "com.apple.applicationaccess"}
-      ]
-    },
-    {
-      "name": "Security",
-      "payloads": [
-        {"name": "Passcode", "payloadType": "com.apple.mobiledevice.passwordpolicy"},
-        {"name": "Security Preferences", "payloadType": "com.apple.preference.security"},
-        {"name": "SmartCard", "payloadType": "com.apple.security.smartcard"}
-      ]
-    },
-    {
-      "name": "System configuration",
-      "payloads": [
-        {"name": "Declarations", "payloadType": "com.apple.declarations"},
-        {"name": "Energy Saver", "payloadType": "com.apple.MCX", "keys": ["com.apple.EnergySaver.desktop.ACPower", "com.apple.EnergySaver.portable.ACPower", "com.apple.EnergySaver.portable.BatteryPower", "com.apple.EnergySaver.desktop.Schedule", "SleepDisabled"]},
-        {"name": "File Provider", "payloadType": "com.apple.fileproviderd"},
-        {"name": "Font", "payloadType": "com.apple.font"},
-        {"name": "Screensaver", "payloadType": "com.apple.screensaver"},
-        {"name": "Software Update", "payloadType": "com.apple.SoftwareUpdate"},
-        {"name": "System Extensions", "payloadType": "com.apple.system-extension-policy"},
-        {"name": "System Logging", "payloadType": "com.apple.system.logging"},
-        {"name": "Time Server", "payloadType": "com.apple.MCX", "keys": ["timeServer", "timeZone"]}
-      ]
-    },
-    {
-      "name": "System policy",
-      "payloads": [
-        {"name": "System Policy Control", "payloadType": "com.apple.systempolicy.control"},
-        {"name": "System Policy Managed", "payloadType": "com.apple.systempolicy.managed"}
-      ]
-    },
-    {
-      "name": "User experience",
-      "payloads": [
-        {"name": "Accessibility", "payloadType": "com.apple.universalaccess"},
-        {"name": "Desktop", "payloadType": "com.apple.desktop"},
-        {"name": "Dock", "payloadType": "com.apple.dock"},
-        {"name": "Finder", "payloadType": "com.apple.finder"},
-        {"name": "Managed Menu Extras", "payloadType": "com.apple.mcxMenuExtras"},
-        {"name": "Notifications", "payloadType": "com.apple.notificationsettings"},
-        {"name": "Screensaver User", "payloadType": "com.apple.screensaver.user"},
-        {"name": "Time Machine", "payloadType": "com.apple.MCX.TimeMachine"}
-      ]
-    },
-    {
-      "name": "VPN",
-      "payloads": [
-        {"name": "VPN", "payloadType": "com.apple.vpn.managed"}
-      ]
-    },
-    {
-      "name": "Web",
-      "payloads": [
-        {"name": "Web Content Filter", "payloadType": "com.apple.webcontent-filter"}
-      ]
-    },
-    {
-      "name": "Xsan",
-      "payloads": [
-        {"name": "Xsan", "payloadType": "com.apple.xsan"},
-        {"name": "Xsan Preferences", "payloadType": "com.apple.xsan.preferences"}
-      ]
+     "name": "Subscribed Calendars",
+     "payloadType": "com.apple.subscribedcalendar.account",
+     "platforms": [
+      "iOS"
+     ]
     }
-  ]
+   ]
+  },
+  {
+   "name": "AirPlay",
+   "payloads": [
+    {
+     "name": "AirPlay",
+     "payloadType": "com.apple.airplay",
+     "platforms": [
+      "macOS",
+      "iOS"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "App management",
+   "payloads": [
+    {
+     "name": "Associated Domains",
+     "payloadType": "com.apple.associated-domains",
+     "platforms": [
+      "macOS"
+     ]
+    },
+    {
+     "name": "Autonomous Single App Mode",
+     "payloadType": "com.apple.asam",
+     "platforms": [
+      "macOS"
+     ]
+    },
+    {
+     "name": "NSExtension Management",
+     "payloadType": "com.apple.NSExtension",
+     "platforms": [
+      "macOS"
+     ]
+    },
+    {
+     "name": "App Lock",
+     "payloadType": "com.apple.app.lock",
+     "platforms": [
+      "iOS"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "App Store",
+   "payloads": [
+    {
+     "name": "App Store",
+     "payloadType": "com.apple.appstore",
+     "platforms": [
+      "macOS"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Authentication",
+   "payloads": [
+    {
+     "name": "Directory Service",
+     "payloadType": "com.apple.DirectoryService.managed",
+     "platforms": [
+      "macOS"
+     ]
+    },
+    {
+     "name": "Extensible Single Sign-On",
+     "payloadType": "com.apple.extensiblesso",
+     "keys": [
+      "ExtensionIdentifier",
+      "TeamIdentifier",
+      "Type",
+      "Realm",
+      "ExtensionData",
+      "URLs",
+      "Hosts",
+      "ScreenLockedBehavior",
+      "DeniedBundleIdentifiers",
+      "AuthenticationMethod",
+      "RegistrationToken",
+      "PlatformSSO"
+     ],
+     "platforms": [
+      "macOS",
+      "iOS"
+     ]
+    },
+    {
+     "name": "Extensible Single Sign-On (Kerberos)",
+     "payloadType": "com.apple.extensiblesso",
+     "keys": [
+      "ExtensionIdentifier",
+      "TeamIdentifier",
+      "Type",
+      "Realm",
+      "ExtensionData",
+      "Hosts"
+     ],
+     "platforms": [
+      "macOS",
+      "iOS"
+     ]
+    },
+    {
+     "name": "Single Sign-On",
+     "payloadType": "com.apple.sso",
+     "platforms": [
+      "iOS"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Certificates",
+   "payloads": [
+    {
+     "name": "ACME Certificate",
+     "payloadType": "com.apple.security.acme",
+     "platforms": [
+      "macOS",
+      "iOS"
+     ]
+    },
+    {
+     "name": "Certificate (PEM)",
+     "payloadType": "com.apple.security.pem",
+     "platforms": [
+      "macOS",
+      "iOS"
+     ]
+    },
+    {
+     "name": "Certificate (PKCS #1)",
+     "payloadType": "com.apple.security.pkcs1",
+     "platforms": [
+      "macOS",
+      "iOS"
+     ]
+    },
+    {
+     "name": "Certificate (PKCS #12)",
+     "payloadType": "com.apple.security.pkcs12",
+     "platforms": [
+      "macOS",
+      "iOS"
+     ]
+    },
+    {
+     "name": "Certificate (Root)",
+     "payloadType": "com.apple.security.root",
+     "platforms": [
+      "macOS",
+      "iOS"
+     ]
+    },
+    {
+     "name": "SCEP",
+     "payloadType": "com.apple.security.scep",
+     "platforms": [
+      "macOS",
+      "iOS"
+     ]
+    },
+    {
+     "name": "Certificate Revocation",
+     "payloadType": "com.apple.security.certificaterevocation",
+     "platforms": [
+      "iOS"
+     ]
+    },
+    {
+     "name": "Certificate Transparency",
+     "payloadType": "com.apple.security.certificatetransparency",
+     "platforms": [
+      "macOS",
+      "iOS"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Ethernet",
+   "payloads": [
+    {
+     "name": "802.1X: First Active Ethernet",
+     "payloadType": "com.apple.firstactiveethernet.managed",
+     "platforms": [
+      "macOS"
+     ]
+    },
+    {
+     "name": "802.1X: First Ethernet",
+     "payloadType": "com.apple.firstethernet.managed",
+     "platforms": [
+      "macOS"
+     ]
+    },
+    {
+     "name": "802.1X: Global Ethernet",
+     "payloadType": "com.apple.globalethernet.managed",
+     "platforms": [
+      "macOS",
+      "iOS"
+     ]
+    },
+    {
+     "name": "802.1X: Second Active Ethernet",
+     "payloadType": "com.apple.secondactiveethernet.managed",
+     "platforms": [
+      "macOS"
+     ]
+    },
+    {
+     "name": "802.1X: Second Ethernet",
+     "payloadType": "com.apple.secondethernet.managed",
+     "platforms": [
+      "macOS"
+     ]
+    },
+    {
+     "name": "802.1X: Third Active Ethernet",
+     "payloadType": "com.apple.thirdactiveethernet.managed",
+     "platforms": [
+      "macOS"
+     ]
+    },
+    {
+     "name": "802.1X: Third Ethernet",
+     "payloadType": "com.apple.thirdethernet.managed",
+     "platforms": [
+      "macOS"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "FileVault",
+   "payloads": [
+    {
+     "name": "FDE FileVault",
+     "payloadType": "com.apple.MCX.FileVault2",
+     "platforms": [
+      "macOS"
+     ]
+    },
+    {
+     "name": "FDE FileVault Options",
+     "payloadType": "com.apple.MCX",
+     "keys": [
+      "dontAllowFDEDisable",
+      "dontAllowFDEEnable",
+      "DestroyFVKeyOnStandby"
+     ],
+     "platforms": [
+      "macOS"
+     ]
+    },
+    {
+     "name": "FDE Recovery Key Escrow",
+     "payloadType": "com.apple.security.FDERecoveryKeyEscrow",
+     "platforms": [
+      "macOS"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Login",
+   "payloads": [
+    {
+     "name": "Login Items: Managed Items",
+     "payloadType": "com.apple.loginitems.managed",
+     "platforms": [
+      "macOS"
+     ]
+    },
+    {
+     "name": "Login Window",
+     "payloadType": "com.apple.loginwindow",
+     "platforms": [
+      "macOS"
+     ]
+    },
+    {
+     "name": "Login Window: Login Items",
+     "payloadType": "loginwindow",
+     "platforms": [
+      "macOS"
+     ]
+    },
+    {
+     "name": "Login Window: Scripts",
+     "payloadType": "com.apple.mcxloginscripts",
+     "platforms": [
+      "macOS"
+     ]
+    },
+    {
+     "name": "Service Management - Managed Login Items",
+     "payloadType": "com.apple.servicemanagement",
+     "platforms": [
+      "macOS"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Managed devices",
+   "payloads": [
+    {
+     "name": "Lights Out Management (LOM)",
+     "payloadType": "com.apple.lom",
+     "platforms": [
+      "macOS"
+     ]
+    },
+    {
+     "name": "Managed Preferences",
+     "payloadType": "com.apple.ManagedClient.preferences",
+     "platforms": [
+      "macOS"
+     ]
+    },
+    {
+     "name": "Profile Removal Password",
+     "payloadType": "com.apple.profileRemovalPassword",
+     "platforms": [
+      "macOS",
+      "iOS"
+     ]
+    },
+    {
+     "name": "MDM",
+     "payloadType": "com.apple.mdm",
+     "platforms": [
+      "macOS",
+      "iOS"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Media management",
+   "payloads": [
+    {
+     "name": "Media Management: Disc Burning",
+     "payloadType": "com.apple.DiscRecording",
+     "platforms": [
+      "macOS"
+     ]
+    },
+    {
+     "name": "TV Remote",
+     "payloadType": "com.apple.tvremote",
+     "platforms": [
+      "iOS"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Networking",
+   "payloads": [
+    {
+     "name": "DNS Settings",
+     "payloadType": "com.apple.dnsSettings.managed",
+     "platforms": [
+      "macOS",
+      "iOS"
+     ]
+    },
+    {
+     "name": "Domains",
+     "payloadType": "com.apple.domains",
+     "platforms": [
+      "macOS",
+      "iOS"
+     ]
+    },
+    {
+     "name": "Firewall",
+     "payloadType": "com.apple.security.firewall",
+     "platforms": [
+      "macOS"
+     ]
+    },
+    {
+     "name": "Wi-Fi",
+     "payloadType": "com.apple.wifi.managed",
+     "platforms": [
+      "macOS",
+      "iOS"
+     ]
+    },
+    {
+     "name": "Wi-Fi Managed Settings",
+     "payloadType": "com.apple.MCX",
+     "keys": [
+      "RequireAdminForIBSS",
+      "RequireAdminForAirPortNetworkChange",
+      "RequireAdminToTurnAirPortOnOff"
+     ],
+     "platforms": [
+      "macOS"
+     ]
+    },
+    {
+     "name": "APN",
+     "payloadType": "com.apple.apn.managed",
+     "platforms": [
+      "iOS"
+     ]
+    },
+    {
+     "name": "Cellular",
+     "payloadType": "com.apple.cellular",
+     "platforms": [
+      "iOS"
+     ]
+    },
+    {
+     "name": "Cellular Private Network",
+     "payloadType": "com.apple.cellularprivatenetwork.managed",
+     "platforms": [
+      "iOS"
+     ]
+    },
+    {
+     "name": "Network Usage Rules",
+     "payloadType": "com.apple.networkusagerules",
+     "platforms": [
+      "iOS"
+     ]
+    },
+    {
+     "name": "Relay",
+     "payloadType": "com.apple.relay.managed",
+     "platforms": [
+      "macOS",
+      "iOS"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Parental controls",
+   "payloads": [
+    {
+     "name": "Parental Controls: Content Filter",
+     "payloadType": "com.apple.familycontrols.contentfilter",
+     "platforms": [
+      "macOS"
+     ]
+    },
+    {
+     "name": "Parental Controls: Dictionary",
+     "payloadType": "com.apple.Dictionary",
+     "platforms": [
+      "macOS"
+     ]
+    },
+    {
+     "name": "Parental Controls: Game Center",
+     "payloadType": "com.apple.gamed",
+     "platforms": [
+      "macOS"
+     ]
+    },
+    {
+     "name": "Parental Controls: Time Limits",
+     "payloadType": "com.apple.familycontrols.timelimits.v2",
+     "platforms": [
+      "macOS"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Preferences",
+   "payloads": [
+    {
+     "name": "Global Preferences",
+     "payloadType": ".GlobalPreferences",
+     "platforms": [
+      "macOS"
+     ]
+    },
+    {
+     "name": "User Preferences",
+     "payloadType": "com.apple.preference.users",
+     "platforms": [
+      "macOS"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Printing",
+   "payloads": [
+    {
+     "name": "AirPrint",
+     "payloadType": "com.apple.airprint",
+     "platforms": [
+      "macOS",
+      "iOS"
+     ]
+    },
+    {
+     "name": "Printing",
+     "payloadType": "com.apple.mcxprinting",
+     "platforms": [
+      "macOS"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Privacy",
+   "payloads": [
+    {
+     "name": "Privacy Preferences Policy Control",
+     "payloadType": "com.apple.TCC.configuration-profile-policy",
+     "platforms": [
+      "macOS"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Proxies",
+   "payloads": [
+    {
+     "name": "DNS Proxy",
+     "payloadType": "com.apple.dnsProxy.managed",
+     "platforms": [
+      "macOS",
+      "iOS"
+     ]
+    },
+    {
+     "name": "Global HTTP Proxy",
+     "payloadType": "com.apple.proxy.http.global",
+     "platforms": [
+      "macOS",
+      "iOS"
+     ]
+    },
+    {
+     "name": "Network Proxy Configuration",
+     "payloadType": "com.apple.SystemConfiguration",
+     "platforms": [
+      "macOS"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Restrictions",
+   "payloads": [
+    {
+     "name": "Restrictions",
+     "payloadType": "com.apple.applicationaccess",
+     "platforms": [
+      "macOS",
+      "iOS"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Security",
+   "payloads": [
+    {
+     "name": "Passcode",
+     "payloadType": "com.apple.mobiledevice.passwordpolicy",
+     "platforms": [
+      "macOS",
+      "iOS"
+     ]
+    },
+    {
+     "name": "Security Preferences",
+     "payloadType": "com.apple.preference.security",
+     "platforms": [
+      "macOS"
+     ]
+    },
+    {
+     "name": "SmartCard",
+     "payloadType": "com.apple.security.smartcard",
+     "platforms": [
+      "macOS"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "System configuration",
+   "payloads": [
+    {
+     "name": "Declarations",
+     "payloadType": "com.apple.declarations",
+     "platforms": [
+      "macOS",
+      "iOS"
+     ]
+    },
+    {
+     "name": "Energy Saver",
+     "payloadType": "com.apple.MCX",
+     "keys": [
+      "SleepDisabled"
+     ],
+     "platforms": [
+      "macOS"
+     ]
+    },
+    {
+     "name": "File Provider",
+     "payloadType": "com.apple.fileproviderd",
+     "platforms": [
+      "macOS"
+     ]
+    },
+    {
+     "name": "Font",
+     "payloadType": "com.apple.font",
+     "platforms": [
+      "macOS",
+      "iOS"
+     ]
+    },
+    {
+     "name": "Screensaver",
+     "payloadType": "com.apple.screensaver",
+     "platforms": [
+      "macOS"
+     ]
+    },
+    {
+     "name": "Software Update",
+     "payloadType": "com.apple.SoftwareUpdate",
+     "platforms": [
+      "macOS"
+     ]
+    },
+    {
+     "name": "System Extensions",
+     "payloadType": "com.apple.system-extension-policy",
+     "platforms": [
+      "macOS"
+     ]
+    },
+    {
+     "name": "System Logging",
+     "payloadType": "com.apple.system.logging",
+     "platforms": [
+      "macOS"
+     ]
+    },
+    {
+     "name": "Time Server",
+     "payloadType": "com.apple.MCX",
+     "keys": [
+      "timeServer",
+      "timeZone"
+     ],
+     "platforms": [
+      "macOS"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "System policy",
+   "payloads": [
+    {
+     "name": "System Policy Control",
+     "payloadType": "com.apple.systempolicy.control",
+     "platforms": [
+      "macOS"
+     ]
+    },
+    {
+     "name": "System Policy Managed",
+     "payloadType": "com.apple.systempolicy.managed",
+     "platforms": [
+      "macOS"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "User experience",
+   "payloads": [
+    {
+     "name": "Accessibility",
+     "payloadType": "com.apple.universalaccess",
+     "platforms": [
+      "macOS"
+     ]
+    },
+    {
+     "name": "Desktop",
+     "payloadType": "com.apple.desktop",
+     "platforms": [
+      "macOS"
+     ]
+    },
+    {
+     "name": "Dock",
+     "payloadType": "com.apple.dock",
+     "platforms": [
+      "macOS"
+     ]
+    },
+    {
+     "name": "Finder",
+     "payloadType": "com.apple.finder",
+     "platforms": [
+      "macOS"
+     ]
+    },
+    {
+     "name": "Managed Menu Extras",
+     "payloadType": "com.apple.mcxMenuExtras",
+     "platforms": [
+      "macOS"
+     ]
+    },
+    {
+     "name": "Notifications",
+     "payloadType": "com.apple.notificationsettings",
+     "platforms": [
+      "macOS",
+      "iOS"
+     ]
+    },
+    {
+     "name": "Screensaver User",
+     "payloadType": "com.apple.screensaver.user",
+     "platforms": [
+      "macOS"
+     ]
+    },
+    {
+     "name": "Time Machine",
+     "payloadType": "com.apple.MCX.TimeMachine",
+     "platforms": [
+      "macOS"
+     ]
+    },
+    {
+     "name": "Setup Assistant",
+     "payloadType": "com.apple.SetupAssistant.managed",
+     "platforms": [
+      "macOS",
+      "iOS"
+     ]
+    },
+    {
+     "name": "Home Screen Layout",
+     "payloadType": "com.apple.homescreenlayout",
+     "platforms": [
+      "iOS"
+     ]
+    },
+    {
+     "name": "Lock Screen Message",
+     "payloadType": "com.apple.shareddeviceconfiguration",
+     "platforms": [
+      "iOS"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "VPN",
+   "payloads": [
+    {
+     "name": "VPN",
+     "payloadType": "com.apple.vpn.managed",
+     "platforms": [
+      "macOS",
+      "iOS"
+     ]
+    },
+    {
+     "name": "App-Layer VPN",
+     "payloadType": "com.apple.vpn.managed.applayer",
+     "platforms": [
+      "macOS",
+      "iOS"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Web",
+   "payloads": [
+    {
+     "name": "Web Content Filter",
+     "payloadType": "com.apple.webcontent-filter",
+     "platforms": [
+      "macOS",
+      "iOS"
+     ]
+    },
+    {
+     "name": "Web Clip",
+     "payloadType": "com.apple.webClip.managed",
+     "platforms": [
+      "macOS",
+      "iOS"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Microsoft applications",
+   "payloads": [
+    {
+     "name": "Microsoft AutoUpdate (MAU)",
+     "payloadType": "com.microsoft.autoupdate2",
+     "platforms": [
+      "macOS"
+     ]
+    },
+    {
+     "name": "Microsoft Defender",
+     "payloadType": "com.microsoft.wdav",
+     "platforms": [
+      "macOS"
+     ]
+    },
+    {
+     "name": "Microsoft Edge",
+     "payloadType": "com.microsoft.Edge",
+     "platforms": [
+      "macOS"
+     ]
+    },
+    {
+     "name": "Microsoft OneDrive",
+     "payloadType": "com.microsoft.OneDrive",
+     "platforms": [
+      "macOS"
+     ]
+    },
+    {
+     "name": "Microsoft Outlook",
+     "payloadType": "com.microsoft.Outlook",
+     "platforms": [
+      "macOS"
+     ]
+    },
+    {
+     "name": "Microsoft Word",
+     "payloadType": "com.microsoft.Word",
+     "platforms": [
+      "macOS"
+     ]
+    },
+    {
+     "name": "Microsoft Excel",
+     "payloadType": "com.microsoft.Excel",
+     "platforms": [
+      "macOS"
+     ]
+    },
+    {
+     "name": "Microsoft PowerPoint",
+     "payloadType": "com.microsoft.Powerpoint",
+     "platforms": [
+      "macOS"
+     ]
+    },
+    {
+     "name": "Microsoft OneNote",
+     "payloadType": "com.microsoft.onenote.mac",
+     "platforms": [
+      "macOS"
+     ]
+    },
+    {
+     "name": "Microsoft Teams",
+     "payloadType": "com.microsoft.teams2",
+     "platforms": [
+      "macOS"
+     ]
+    },
+    {
+     "name": "Intune Company Portal",
+     "payloadType": "com.microsoft.CompanyPortal",
+     "platforms": [
+      "macOS"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Xsan",
+   "payloads": [
+    {
+     "name": "Xsan",
+     "payloadType": "com.apple.xsan",
+     "platforms": [
+      "macOS"
+     ]
+    },
+    {
+     "name": "Xsan Preferences",
+     "payloadType": "com.apple.xsan.preferences",
+     "platforms": [
+      "macOS"
+     ]
+    }
+   ]
+  }
+ ]
 }

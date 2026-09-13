@@ -5,235 +5,571 @@
   "lastVerified": "2026-07-30",
   "verifiedAgainst": "Intune service release current as of July 2026; Jamf Pro 11.x",
   "notes": "Perishable data. Advisory notes are held per target MDM — 'toIntune' applies when Intune is the destination, 'toJamf' when Jamf is. Live evidence from the tenants and from Intune's settings catalog always overrides these entries; they exist for the things an API can't tell you. Re-verify before relying on a gap report.",
-
   "profilePayloads": [
     {
       "jamfPayload": "Custom Settings (.mobileconfig)",
       "applePayloadType": "*",
-      "toIntune": { "equivalent": "Custom profile (upload)", "delivery": "customProfile", "status": "direct", "notes": "Fallback path for anything unmapped." },
-      "toJamf": { "equivalent": "Application & Custom Settings", "delivery": "customProfile", "status": "direct", "notes": "Upload the plist or mobileconfig directly." }
+      "toIntune": {
+        "equivalent": "Custom profile (upload)",
+        "delivery": "customProfile",
+        "status": "direct",
+        "notes": "Fallback path for anything unmapped."
+      },
+      "toJamf": {
+        "equivalent": "Application & Custom Settings",
+        "delivery": "customProfile",
+        "status": "direct",
+        "notes": "Upload the plist or mobileconfig directly."
+      }
     },
     {
       "jamfPayload": "Privacy Preferences Policy Control",
       "applePayloadType": "com.apple.TCC.configuration-profile-policy",
-      "toIntune": { "equivalent": "Settings catalog", "delivery": "settingsCatalog", "status": "direct", "notes": "" },
-      "toJamf": { "equivalent": "Privacy Preferences Policy Control payload", "delivery": "nativePayload", "status": "direct", "notes": "Code requirements must be re-generated if app signing differs." }
+      "toIntune": {
+        "equivalent": "Settings catalog",
+        "delivery": "settingsCatalog",
+        "status": "direct",
+        "notes": ""
+      },
+      "toJamf": {
+        "equivalent": "Privacy Preferences Policy Control payload",
+        "delivery": "nativePayload",
+        "status": "direct",
+        "notes": "Code requirements must be re-generated if app signing differs."
+      }
     },
     {
       "jamfPayload": "System Extensions",
       "applePayloadType": "com.apple.system-extension-policy",
-      "toIntune": { "equivalent": "Settings catalog", "delivery": "settingsCatalog", "status": "direct", "notes": "Kernel extensions are legacy; map to system extensions." },
-      "toJamf": { "equivalent": "System Extensions payload", "delivery": "nativePayload", "status": "direct", "notes": "" }
+      "toIntune": {
+        "equivalent": "Settings catalog",
+        "delivery": "settingsCatalog",
+        "status": "direct",
+        "notes": "Kernel extensions are legacy; map to system extensions."
+      },
+      "toJamf": {
+        "equivalent": "System Extensions payload",
+        "delivery": "nativePayload",
+        "status": "direct",
+        "notes": "Team identifiers and bundle identifiers carry over unchanged; Jamf edits them in a native payload."
+      }
     },
     {
       "jamfPayload": "Firewall",
       "applePayloadType": "com.apple.security.firewall",
-      "toIntune": { "equivalent": "Settings catalog > Security", "delivery": "settingsCatalog", "status": "direct", "notes": "" },
-      "toJamf": { "equivalent": "Security & Privacy payload", "delivery": "nativePayload", "status": "direct", "notes": "" }
+      "toIntune": {
+        "equivalent": "Settings catalog > Security",
+        "delivery": "settingsCatalog",
+        "status": "direct",
+        "notes": ""
+      },
+      "toJamf": {
+        "equivalent": "Security & Privacy payload",
+        "delivery": "nativePayload",
+        "status": "direct",
+        "notes": "Jamf exposes firewall settings in the Security & Privacy payload rather than as a standalone firewall object."
+      }
     },
     {
       "jamfPayload": "Security and Privacy (Gatekeeper)",
       "applePayloadType": "com.apple.systempolicy.control",
-      "toIntune": { "equivalent": "Settings catalog", "delivery": "settingsCatalog", "status": "direct", "notes": "" },
-      "toJamf": { "equivalent": "Security & Privacy payload", "delivery": "nativePayload", "status": "direct", "notes": "" }
+      "toIntune": {
+        "equivalent": "Settings catalog",
+        "delivery": "settingsCatalog",
+        "status": "direct",
+        "notes": ""
+      },
+      "toJamf": {
+        "equivalent": "Security & Privacy payload",
+        "delivery": "nativePayload",
+        "status": "direct",
+        "notes": "Gatekeeper assessment lives alongside firewall settings in the same Jamf payload."
+      }
     },
     {
       "jamfPayload": "Energy Saver / MCX",
       "applePayloadType": "com.apple.MCX",
-      "toIntune": { "equivalent": "Settings catalog", "delivery": "settingsCatalog", "status": "direct", "notes": "" },
-      "toJamf": { "equivalent": "Energy Saver payload", "delivery": "nativePayload", "status": "direct", "notes": "Several distinct Jamf payloads share this domain — check which keys you actually need." }
+      "toIntune": {
+        "equivalent": "Settings catalog",
+        "delivery": "settingsCatalog",
+        "status": "direct",
+        "notes": ""
+      },
+      "toJamf": {
+        "equivalent": "Energy Saver payload",
+        "delivery": "nativePayload",
+        "status": "direct",
+        "notes": "Several distinct Jamf payloads share this domain — check which keys you actually need."
+      }
     },
     {
       "jamfPayload": "Fonts",
       "applePayloadType": "com.apple.font",
-      "toIntune": { "equivalent": "Settings catalog > System Configuration", "delivery": "settingsCatalog", "status": "direct", "notes": "Font files must be under 2 MB." },
-      "toJamf": { "equivalent": "Fonts payload", "delivery": "nativePayload", "status": "direct", "notes": "Font files must be re-uploaded." }
+      "toIntune": {
+        "equivalent": "Settings catalog > System Configuration",
+        "delivery": "settingsCatalog",
+        "status": "direct",
+        "notes": "Font files must be under 2 MB."
+      },
+      "toJamf": {
+        "equivalent": "Fonts payload",
+        "delivery": "nativePayload",
+        "status": "direct",
+        "notes": "Font files must be re-uploaded."
+      }
     },
     {
       "jamfPayload": "Login Window",
       "applePayloadType": "com.apple.loginwindow",
-      "toIntune": { "equivalent": "Settings catalog > Login Window", "delivery": "settingsCatalog", "status": "direct", "notes": "" },
-      "toJamf": { "equivalent": "Login Window payload", "delivery": "nativePayload", "status": "direct", "notes": "" }
+      "toIntune": {
+        "equivalent": "Settings catalog > Login Window",
+        "delivery": "settingsCatalog",
+        "status": "direct",
+        "notes": ""
+      },
+      "toJamf": {
+        "equivalent": "Login Window payload",
+        "delivery": "nativePayload",
+        "status": "direct",
+        "notes": "Jamf has a dedicated editor covering banner text, user list visibility and power-button behaviour."
+      }
     },
     {
       "jamfPayload": "Screensaver",
       "applePayloadType": "com.apple.screensaver",
-      "toIntune": { "equivalent": "Settings catalog", "delivery": "settingsCatalog", "status": "direct", "notes": "" },
-      "toJamf": { "equivalent": "Login Window / Screen Saver payload", "delivery": "nativePayload", "status": "direct", "notes": "" }
+      "toIntune": {
+        "equivalent": "Settings catalog",
+        "delivery": "settingsCatalog",
+        "status": "direct",
+        "notes": ""
+      },
+      "toJamf": {
+        "equivalent": "Login Window / Screen Saver payload",
+        "delivery": "nativePayload",
+        "status": "direct",
+        "notes": "Idle time and password-on-wake sit in the Login Window payload; per-user screensaver settings are a separate payload."
+      }
     },
     {
       "jamfPayload": "Restrictions",
       "applePayloadType": "com.apple.applicationaccess",
-      "toIntune": { "equivalent": "Settings catalog", "delivery": "settingsCatalog", "status": "partial", "notes": "Several intelligence-related keys deprecated in OS 26.4; use DDM configurations instead." },
-      "toJamf": { "equivalent": "Restrictions payload", "delivery": "nativePayload", "status": "partial", "notes": "Jamf's Restrictions editor exposes a subset of the domain; anything missing goes through Application & Custom Settings." }
+      "toIntune": {
+        "equivalent": "Settings catalog",
+        "delivery": "settingsCatalog",
+        "status": "partial",
+        "notes": "Several intelligence-related keys deprecated in OS 26.4; use DDM configurations instead."
+      },
+      "toJamf": {
+        "equivalent": "Restrictions payload",
+        "delivery": "nativePayload",
+        "status": "partial",
+        "notes": "Jamf's Restrictions editor exposes a subset of the domain; anything missing goes through Application & Custom Settings."
+      }
     },
     {
       "jamfPayload": "Disk Encryption (FileVault)",
       "applePayloadType": "com.apple.MCX.FileVault2",
       "userImpact": "high",
       "impact": "Recovery keys do not migrate in either direction. The destination MDM cannot escrow a key it never issued, so keys must be re-issued and re-escrowed after the move.",
-      "toIntune": { "equivalent": "Settings catalog > Full Disk Encryption", "delivery": "settingsCatalog", "status": "partial", "notes": "See disruptionItems for the re-escrow path." },
-      "toJamf": { "equivalent": "Disk Encryption payload", "delivery": "nativePayload", "status": "partial", "notes": "Jamf issues its own recovery key via the Disk Encryption configuration; existing keys don't transfer. See disruptionItems." }
+      "toIntune": {
+        "equivalent": "Settings catalog > Full Disk Encryption",
+        "delivery": "settingsCatalog",
+        "status": "partial",
+        "notes": "See disruptionItems for the re-escrow path."
+      },
+      "toJamf": {
+        "equivalent": "Disk Encryption payload",
+        "delivery": "nativePayload",
+        "status": "partial",
+        "notes": "Jamf issues its own recovery key via the Disk Encryption configuration; existing keys don't transfer. See disruptionItems."
+      }
     },
     {
       "jamfPayload": "Single Sign-On Extension / Platform SSO",
       "applePayloadType": "com.apple.extensiblesso",
       "userImpact": "high",
       "impact": "Users must re-register Platform SSO after the move, whichever MDM they land on.",
-      "toIntune": { "equivalent": "Platform SSO profile", "delivery": "templateProfile", "status": "partial", "notes": "Registration is driven by the Company Portal." },
-      "toJamf": { "equivalent": "Single Sign-On Extension payload", "delivery": "nativePayload", "status": "partial", "notes": "Jamf Connect or a Kerberos extension may be required depending on the identity provider." }
+      "toIntune": {
+        "equivalent": "Platform SSO profile",
+        "delivery": "templateProfile",
+        "status": "partial",
+        "notes": "Registration is driven by the Company Portal."
+      },
+      "toJamf": {
+        "equivalent": "Single Sign-On Extension payload",
+        "delivery": "nativePayload",
+        "status": "partial",
+        "notes": "Jamf Connect or a Kerberos extension may be required depending on the identity provider."
+      }
     },
     {
       "jamfPayload": "Network (Wi-Fi)",
       "applePayloadType": "com.apple.wifi.managed",
       "userImpact": "high",
       "impact": "Certificate identities used for 802.1X do not transfer. Stage them in the destination before moving devices or they lose network on arrival.",
-      "toIntune": { "equivalent": "Wi-Fi profile", "delivery": "templateProfile", "status": "partial", "notes": "Pair with a SCEP or PKCS profile for the identity." },
-      "toJamf": { "equivalent": "Network payload", "delivery": "nativePayload", "status": "partial", "notes": "Pair with a Jamf-issued certificate payload for the identity." }
+      "toIntune": {
+        "equivalent": "Wi-Fi profile",
+        "delivery": "templateProfile",
+        "status": "partial",
+        "notes": "Pair with a SCEP or PKCS profile for the identity."
+      },
+      "toJamf": {
+        "equivalent": "Network payload",
+        "delivery": "nativePayload",
+        "status": "partial",
+        "notes": "Pair with a Jamf-issued certificate payload for the identity."
+      }
     },
     {
       "jamfPayload": "VPN",
       "applePayloadType": "com.apple.vpn.managed",
       "userImpact": "high",
       "impact": "Per-app VPN mappings and certificate identities need rebuilding in the destination.",
-      "toIntune": { "equivalent": "VPN profile", "delivery": "templateProfile", "status": "partial", "notes": "" },
-      "toJamf": { "equivalent": "VPN payload", "delivery": "nativePayload", "status": "partial", "notes": "" }
+      "toIntune": {
+        "equivalent": "VPN profile",
+        "delivery": "templateProfile",
+        "status": "partial",
+        "notes": ""
+      },
+      "toJamf": {
+        "equivalent": "VPN payload",
+        "delivery": "nativePayload",
+        "status": "partial",
+        "notes": "Jamf edits VPN natively, but the certificate identity must be reissued through Jamf PKI before the profile will connect."
+      }
     },
     {
       "jamfPayload": "Certificate",
       "applePayloadType": "com.apple.security.pkcs12",
       "userImpact": "high",
       "impact": "Certificates are issued by the MDM's own CA connector. They do not move; they are reissued.",
-      "toIntune": { "equivalent": "PKCS certificate profile (template)", "delivery": "templateProfile", "status": "partial", "notes": "Requires the Intune Certificate Connector." },
-      "toJamf": { "equivalent": "Certificate payload", "delivery": "nativePayload", "status": "partial", "notes": "Requires a Jamf PKI or AD CS integration." }
+      "toIntune": {
+        "equivalent": "PKCS certificate profile (template)",
+        "delivery": "templateProfile",
+        "status": "partial",
+        "notes": "Requires the Intune Certificate Connector."
+      },
+      "toJamf": {
+        "equivalent": "Certificate payload",
+        "delivery": "nativePayload",
+        "status": "partial",
+        "notes": "Requires a Jamf PKI or AD CS integration."
+      }
     },
     {
       "jamfPayload": "SCEP",
       "applePayloadType": "com.apple.security.scep",
       "userImpact": "high",
       "impact": "SCEP identities are issued by the MDM's CA connector and are reissued rather than migrated.",
-      "toIntune": { "equivalent": "SCEP certificate profile (template)", "delivery": "templateProfile", "status": "partial", "notes": "Built from the Intune profile template, not the settings catalog. Requires the Intune Certificate Connector and an NDES/SCEP endpoint." },
-      "toJamf": { "equivalent": "SCEP payload", "delivery": "nativePayload", "status": "partial", "notes": "Jamf can proxy SCEP requests or hand the device a direct SCEP URL." }
+      "toIntune": {
+        "equivalent": "SCEP certificate profile (template)",
+        "delivery": "templateProfile",
+        "status": "partial",
+        "notes": "Built from the Intune profile template, not the settings catalog. Requires the Intune Certificate Connector and an NDES/SCEP endpoint."
+      },
+      "toJamf": {
+        "equivalent": "SCEP payload",
+        "delivery": "nativePayload",
+        "status": "partial",
+        "notes": "Jamf can proxy SCEP requests or hand the device a direct SCEP URL."
+      }
     },
     {
       "jamfPayload": "Login Items",
       "applePayloadType": "com.apple.loginitems.managed",
-      "toIntune": { "equivalent": "Settings catalog > Login > Login Items", "delivery": "settingsCatalog", "status": "direct", "notes": "" },
-      "toJamf": { "equivalent": "Login Items payload", "delivery": "nativePayload", "status": "direct", "notes": "" }
+      "toIntune": {
+        "equivalent": "Settings catalog > Login > Login Items",
+        "delivery": "settingsCatalog",
+        "status": "direct",
+        "notes": ""
+      },
+      "toJamf": {
+        "equivalent": "Login Items payload",
+        "delivery": "nativePayload",
+        "status": "direct",
+        "notes": "Jamf manages login items natively; paths must exist on the target device or the item is silently skipped."
+      }
     },
     {
       "jamfPayload": "Login Window Login Items",
       "applePayloadType": "loginwindow",
-      "toIntune": { "equivalent": "Settings catalog > Login > Login Window Login Items", "delivery": "settingsCatalog", "status": "direct", "notes": "" },
-      "toJamf": { "equivalent": "Login Window payload", "delivery": "nativePayload", "status": "direct", "notes": "" }
+      "toIntune": {
+        "equivalent": "Settings catalog > Login > Login Window Login Items",
+        "delivery": "settingsCatalog",
+        "status": "direct",
+        "notes": ""
+      },
+      "toJamf": {
+        "equivalent": "Login Window payload",
+        "delivery": "nativePayload",
+        "status": "direct",
+        "notes": "Delivered through the Login Window payload in Jamf."
+      }
     },
     {
       "jamfPayload": "Service Management — Managed Login Items",
       "applePayloadType": "com.apple.servicemanagement",
-      "toIntune": { "equivalent": "Settings catalog > Login > Service Management", "delivery": "settingsCatalog", "status": "direct", "notes": "Auto-enables and auto-allows matched background items." },
-      "toJamf": { "equivalent": "Application & Custom Settings", "delivery": "customProfile", "status": "direct", "notes": "" }
+      "toIntune": {
+        "equivalent": "Settings catalog > Login > Service Management",
+        "delivery": "settingsCatalog",
+        "status": "direct",
+        "notes": "Auto-enables and auto-allows matched background items."
+      },
+      "toJamf": {
+        "equivalent": "Application & Custom Settings",
+        "delivery": "customProfile",
+        "status": "direct",
+        "notes": "No native Jamf editor. Deliver the Rules array through Application & Custom Settings."
+      }
     },
     {
       "jamfPayload": "DNS Settings",
       "applePayloadType": "com.apple.dnsSettings.managed",
-      "toIntune": { "equivalent": "Settings catalog > Networking > DNS Settings", "delivery": "settingsCatalog", "status": "direct", "notes": "Includes On Demand rules and encrypted DNS protocol settings." },
-      "toJamf": { "equivalent": "DNS Settings payload", "delivery": "nativePayload", "status": "direct", "notes": "" }
+      "toIntune": {
+        "equivalent": "Settings catalog > Networking > DNS Settings",
+        "delivery": "settingsCatalog",
+        "status": "direct",
+        "notes": "Includes On Demand rules and encrypted DNS protocol settings."
+      },
+      "toJamf": {
+        "equivalent": "DNS Settings payload",
+        "delivery": "nativePayload",
+        "status": "direct",
+        "notes": "Jamf edits encrypted DNS natively, including On Demand rules."
+      }
     },
     {
       "jamfPayload": "Declarations",
       "applePayloadType": "com.apple.declarations",
-      "toIntune": { "equivalent": null, "delivery": "notSupported", "status": "manual", "notes": "Intune exposes only the declarative configurations Microsoft has implemented; it cannot deliver an arbitrary custom DDM declaration. Anything outside that set has to be rebuilt with the settings it does support." },
-      "toJamf": { "equivalent": "Blueprints", "delivery": "nativePayload", "status": "partial", "notes": "Jamf Pro delivers declarative configurations through Blueprints. Check which declaration types your Jamf version exposes." }
+      "toIntune": {
+        "equivalent": null,
+        "delivery": "notSupported",
+        "status": "manual",
+        "notes": "Intune exposes only the declarative configurations Microsoft has implemented; it cannot deliver an arbitrary custom DDM declaration. Anything outside that set has to be rebuilt with the settings it does support."
+      },
+      "toJamf": {
+        "equivalent": "Blueprints",
+        "delivery": "nativePayload",
+        "status": "partial",
+        "notes": "Jamf Pro delivers declarative configurations through Blueprints. Check which declaration types your Jamf version exposes."
+      }
     },
     {
       "jamfPayload": "Trusted Certificate (root)",
       "applePayloadType": "com.apple.security.root",
-      "toIntune": { "equivalent": "Trusted certificate profile", "delivery": "templateProfile", "status": "direct", "notes": "Re-upload the certificate; the profile carries no secret." },
-      "toJamf": { "equivalent": "Certificate payload", "delivery": "nativePayload", "status": "direct", "notes": "Re-upload the certificate; the profile carries no secret." }
+      "toIntune": {
+        "equivalent": "Trusted certificate profile",
+        "delivery": "templateProfile",
+        "status": "direct",
+        "notes": "Re-upload the certificate; the profile carries no secret."
+      },
+      "toJamf": {
+        "equivalent": "Certificate payload",
+        "delivery": "nativePayload",
+        "status": "direct",
+        "notes": "Re-upload the certificate; the profile carries no secret."
+      }
     },
     {
       "jamfPayload": "Dock",
       "applePayloadType": "com.apple.dock",
-      "toIntune": { "equivalent": "Settings catalog or custom profile", "delivery": "settingsCatalog", "status": "partial", "notes": "Complex Dock layouts usually need a custom profile." },
-      "toJamf": { "equivalent": "Dock payload", "delivery": "nativePayload", "status": "direct", "notes": "" }
+      "toIntune": {
+        "equivalent": "Settings catalog or custom profile",
+        "delivery": "settingsCatalog",
+        "status": "partial",
+        "notes": "Complex Dock layouts usually need a custom profile."
+      },
+      "toJamf": {
+        "equivalent": "Dock payload",
+        "delivery": "nativePayload",
+        "status": "direct",
+        "notes": "Jamf has a full Dock editor including persistent apps and folders, so complex layouts survive better in this direction."
+      }
     },
     {
       "jamfPayload": "Software Update",
       "applePayloadType": "com.apple.SoftwareUpdate",
-      "toIntune": { "equivalent": "DDM software update configuration", "delivery": "declarative", "status": "manual", "notes": "Rebuild as a declarative configuration. The legacy payload, MDM update commands and update restrictions are being removed with the 2026 OS release." },
-      "toJamf": { "equivalent": "Declarative software update enforcement", "delivery": "declarative", "status": "manual", "notes": "Jamf's own update controls have moved to declarative enforcement; confirm what your Jamf Pro version exposes before rebuilding." }
+      "toIntune": {
+        "equivalent": "DDM software update configuration",
+        "delivery": "declarative",
+        "status": "manual",
+        "notes": "Rebuild as a declarative configuration. The legacy payload, MDM update commands and update restrictions are being removed with the 2026 OS release."
+      },
+      "toJamf": {
+        "equivalent": "Declarative software update enforcement",
+        "delivery": "declarative",
+        "status": "manual",
+        "notes": "Jamf's own update controls have moved to declarative enforcement; confirm what your Jamf Pro version exposes before rebuilding."
+      }
     },
     {
       "jamfPayload": "Managed Software Update restrictions",
       "applePayloadType": "com.apple.applicationaccess.new",
-      "toIntune": { "equivalent": "DDM software update enforcement", "delivery": "declarative", "status": "manual", "notes": "Deferral keys are superseded by declarative enforcement." },
-      "toJamf": { "equivalent": "Declarative software update enforcement", "delivery": "declarative", "status": "manual", "notes": "Deferral keys are superseded by declarative enforcement." }
+      "toIntune": {
+        "equivalent": "DDM software update enforcement",
+        "delivery": "declarative",
+        "status": "manual",
+        "notes": "Deferral keys are superseded by declarative enforcement."
+      },
+      "toJamf": {
+        "equivalent": "Declarative software update enforcement",
+        "delivery": "declarative",
+        "status": "manual",
+        "notes": "Deferral keys are superseded by declarative enforcement."
+      }
     },
     {
       "jamfPayload": "Printing",
       "applePayloadType": "com.apple.mcxprinting",
-      "toIntune": { "equivalent": "Custom mobileconfig only", "delivery": "customProfile", "status": "unverified", "notes": "Not confirmed against current docs. Verify before relying on this entry." },
-      "toJamf": { "equivalent": "Printers payload", "delivery": "nativePayload", "status": "direct", "notes": "Jamf manages printers as their own object as well as via payload." }
+      "toIntune": {
+        "equivalent": "Custom mobileconfig only",
+        "delivery": "customProfile",
+        "status": "unverified",
+        "notes": "Not confirmed against current docs. Verify before relying on this entry."
+      },
+      "toJamf": {
+        "equivalent": "Printers payload",
+        "delivery": "nativePayload",
+        "status": "direct",
+        "notes": "Jamf manages printers as their own object as well as via payload."
+      }
     },
     {
       "jamfPayload": "Directory Binding",
       "applePayloadType": "com.apple.DirectoryService.managed",
-      "toIntune": { "equivalent": null, "delivery": "notSupported", "status": "manual", "notes": "No equivalent in Intune. Directory binding is largely obsolete on macOS — consider Platform SSO instead." },
-      "toJamf": { "equivalent": "Directory payload", "delivery": "nativePayload", "status": "direct", "notes": "Jamf still exposes a Directory binding payload, though binding is largely obsolete on macOS." }
+      "toIntune": {
+        "equivalent": null,
+        "delivery": "notSupported",
+        "status": "manual",
+        "notes": "No equivalent in Intune. Directory binding is largely obsolete on macOS — consider Platform SSO instead."
+      },
+      "toJamf": {
+        "equivalent": "Directory payload",
+        "delivery": "nativePayload",
+        "status": "direct",
+        "notes": "Jamf still exposes a Directory binding payload, though binding is largely obsolete on macOS."
+      }
     }
   ],
-
   "nonProfileObjects": [
     {
       "jamfObject": "Packages (PKG)",
-      "intuneEquivalent": "macOS app (PKG/DMG)",
-      "status": "direct",
-      "notes": "Re-upload required in either direction; signing requirements differ."
+      "toIntune": {
+        "equivalent": "macOS app (PKG/DMG)",
+        "status": "direct",
+        "notes": "Re-upload required; Intune wraps PKGs and requires them signed with a Developer ID Installer certificate."
+      },
+      "toJamf": {
+        "equivalent": "Package",
+        "status": "direct",
+        "notes": "Re-upload to a Jamf distribution point. Jamf can deploy unsigned packages, so this direction is less restrictive."
+      }
     },
     {
       "jamfObject": "Extension Attributes",
-      "intuneEquivalent": "Custom attributes",
-      "status": "partial",
-      "notes": "One value per script; output contract differs between the two."
+      "toIntune": {
+        "equivalent": "Custom attributes",
+        "status": "partial",
+        "notes": "One value per script, and Intune expects a single echoed value. Jamf EA output usually needs trimming."
+      },
+      "toJamf": {
+        "equivalent": "Extension Attributes",
+        "status": "partial",
+        "notes": "Jamf accepts richer output and supports data types and inventory display, so custom attribute scripts usually port with little change."
+      }
     },
     {
       "jamfObject": "Scripts",
-      "intuneEquivalent": "Shell scripts",
-      "status": "partial",
-      "notes": "Intune shell scripts take no parameters and have no event triggers. Moving to Jamf regains both."
+      "toIntune": {
+        "equivalent": "Shell scripts",
+        "status": "partial",
+        "notes": "No parameters, no event triggers, and a per-tenant script count limit. Values must be hardcoded."
+      },
+      "toJamf": {
+        "equivalent": "Scripts",
+        "status": "partial",
+        "notes": "Jamf regains parameters ($4-$11) and event triggers, so an Intune shell script can usually be simplified rather than rewritten."
+      }
     },
     {
       "jamfObject": "Smart Groups",
-      "intuneEquivalent": "Entra dynamic groups",
-      "status": "manual",
-      "notes": "Different syntax and evaluation model: Entra evaluates directory attributes, Jamf evaluates device inventory."
+      "toIntune": {
+        "equivalent": "Entra dynamic groups",
+        "status": "manual",
+        "notes": "Different syntax and evaluation model: Entra evaluates directory attributes, not device inventory. Inventory-based criteria have no equivalent."
+      },
+      "toJamf": {
+        "equivalent": "Smart Computer Groups",
+        "status": "manual",
+        "notes": "Jamf evaluates device inventory directly, so most Entra dynamic rules must be rewritten against inventory attributes instead."
+      }
     },
     {
       "jamfObject": "Policies (event-triggered)",
-      "intuneEquivalent": null,
-      "status": "manual",
-      "notes": "Intune has no equivalent to Jamf's event-triggered policy engine. Moving to Jamf, scheduled scripts can become real policies."
+      "toIntune": {
+        "equivalent": null,
+        "status": "manual",
+        "notes": "Intune has no event-triggered policy engine. Rebuild as scheduled shell scripts, app assignments or settings catalog policies."
+      },
+      "toJamf": {
+        "equivalent": "Policies",
+        "status": "direct",
+        "notes": "Moving to Jamf, scheduled Intune scripts can become real policies with triggers, scoping and Self Service availability."
+      }
     },
     {
       "jamfObject": "Self Service",
-      "intuneEquivalent": "Company Portal",
-      "status": "manual",
-      "notes": "Company Portal customisation is far more limited than Self Service."
+      "toIntune": {
+        "equivalent": "Company Portal",
+        "status": "manual",
+        "notes": "Company Portal customisation is far more limited: no categories, branding or per-item descriptions to the same degree."
+      },
+      "toJamf": {
+        "equivalent": "Self Service",
+        "status": "direct",
+        "notes": "Jamf Self Service is considerably richer, so this direction gains capability rather than losing it."
+      }
     },
     {
       "jamfObject": "Patch Management",
-      "intuneEquivalent": null,
-      "status": "manual",
-      "notes": "No Intune equivalent."
+      "toIntune": {
+        "equivalent": null,
+        "status": "manual",
+        "notes": "No Intune equivalent for third-party patch definitions."
+      },
+      "toJamf": {
+        "equivalent": "Patch Management",
+        "status": "direct",
+        "notes": "Jamf provides patch definitions and reporting that Intune has no counterpart for."
+      }
     },
     {
       "jamfObject": "Restricted / Licensed Software",
-      "intuneEquivalent": null,
-      "status": "manual",
-      "notes": "No Intune equivalent."
+      "toIntune": {
+        "equivalent": null,
+        "status": "manual",
+        "notes": "No Intune equivalent. Blocking application launch requires a different approach entirely."
+      },
+      "toJamf": {
+        "equivalent": "Restricted Software",
+        "status": "direct",
+        "notes": "Jamf can block application launch by process name, which Intune cannot."
+      }
+    },
+    {
+      "jamfObject": "Compliance policies",
+      "toIntune": {
+        "equivalent": "Compliance policies",
+        "status": "manual",
+        "notes": "Jamf has no direct equivalent; compliance is usually expressed through Smart Groups and Conditional Access integration."
+      },
+      "toJamf": {
+        "equivalent": null,
+        "status": "manual",
+        "notes": "Jamf Pro has no native compliance policy object. Device state feeds Conditional Access through the Jamf-Intune integration instead, which must be configured separately."
+      }
     }
   ],
-
   "disruptionItems": [
     {
       "id": "filevault-reescrow",

@@ -61,12 +61,25 @@ struct CatalogIndex {
     /// "unverified" rather than implying nothing is supported.
     let isAvailable: Bool
 
+    /// Original casing for a domain, for display.
+    private(set) var domainDisplay: [String: String] = [:]
+    /// domain → keys Intune can express
+    private var keysByDomain: [String: Set<String>] = [:]
+
     init(settings: [CatalogSetting]) {
         settingCount = settings.count
         isAvailable = !settings.isEmpty
 
         for setting in settings {
-            if let domain = setting.domain, let key = setting.key {
+            if var domain = setting.domain, var key = setting.key {
+                // Intune nests vendor application preferences inside the
+                // ManagedPreferences payload; lift them into their own
+                // domains so each app reads as its own payload.
+                if let vendor = IntuneClient.vendorSplit(domain: domain, key: key,
+                                                         categoryName: setting.categoryName) {
+                    domain = vendor.domain
+                    key = vendor.key
+                }
                 domains.insert(domain.lowercased())
                 if domainDisplay[domain.lowercased()] == nil {
                     domainDisplay[domain.lowercased()] = domain
@@ -84,10 +97,6 @@ struct CatalogIndex {
     }
 
     /// Original casing for a domain, for display.
-    private(set) var domainDisplay: [String: String] = [:]
-    /// domain → keys Intune can express
-    private var keysByDomain: [String: Set<String>] = [:]
-
     func keyCount(forDomain domain: String) -> Int {
         keysByDomain[domain.lowercased()]?.count ?? 0
     }
@@ -158,6 +167,10 @@ struct CatalogIndex {
     /// A human name for a payload domain, taken from Intune's own category
     /// labels. Saves hand-curating a name for every Apple payload.
     func displayName(forDomain domain: String) -> String? {
+        // Vendor application domains carry a proper product name.
+        if let vendor = IntuneClient.vendorDomainNames[domain.lowercased()] {
+            return vendor
+        }
         let prefix = domain.lowercased() + "|"
         return byDomainKey
             .first { $0.key.hasPrefix(prefix) && $0.value.categoryName != nil }?
@@ -171,13 +184,16 @@ struct CatalogIndex {
 /// is cached between runs and refreshed in the background.
 enum CatalogCache {
 
-    private static var url: URL? {
+    /// One cache file per platform. A single shared file would let an iOS
+    /// harvest silently overwrite the macOS catalog, and the next macOS
+    /// analysis would read iOS settings while reporting them as Mac.
+    private static func url(for platform: DevicePlatform) -> URL? {
         guard let base = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first else {
             return nil
         }
         let folder = base.appendingPathComponent("MDMMigrationCockpit", isDirectory: true)
         try? FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
-        return folder.appendingPathComponent("macos-settings-catalog.json")
+        return folder.appendingPathComponent("\(platform.rawValue)-settings-catalog.json")
     }
 
     private struct Payload: Codable {
@@ -193,8 +209,8 @@ enum CatalogCache {
     }
 
     /// Cached settings, plus how old they are. Returns nil when absent.
-    static func load() -> (settings: [CatalogSetting], fetchedAt: Date)? {
-        guard let url, let data = try? Data(contentsOf: url),
+    static func load(for platform: DevicePlatform) -> (settings: [CatalogSetting], fetchedAt: Date)? {
+        guard let url = url(for: platform), let data = try? Data(contentsOf: url),
               let payload = try? JSONDecoder().decode(Payload.self, from: data) else { return nil }
         let settings = payload.settings.map {
             CatalogSetting(id: $0.id, displayName: $0.displayName,
@@ -203,8 +219,8 @@ enum CatalogCache {
         return (settings, payload.fetchedAt)
     }
 
-    static func save(_ settings: [CatalogSetting]) {
-        guard let url else { return }
+    static func save(_ settings: [CatalogSetting], for platform: DevicePlatform) {
+        guard let url = url(for: platform) else { return }
         let payload = Payload(
             fetchedAt: Date(),
             settings: settings.map {

@@ -51,6 +51,13 @@ struct ManagedDevice: Identifiable, Codable {
     var osVersion: String?
     var currentMDM: MDMVendor?
     var abmServerName: String?
+    /// ABM's productFamily verbatim ("Mac", "iPhone", "iPad"…). Kept raw so
+    /// classification stays in one place and unrecognised values survive.
+    var productFamily: String?
+
+    var classification: DeviceClassification {
+        .from(productFamily: productFamily)
+    }
 }
 
 // MARK: - Analysis output

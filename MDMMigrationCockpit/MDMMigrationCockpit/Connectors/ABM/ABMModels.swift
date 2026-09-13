@@ -87,7 +87,8 @@ struct OrgDevice: Decodable, Identifiable {
             model: attributes?.deviceModel ?? attributes?.productType ?? "Unknown",
             osVersion: nil,
             currentMDM: nil,
-            abmServerName: serverName
+            abmServerName: serverName,
+            productFamily: attributes?.productFamily
         )
     }
 }

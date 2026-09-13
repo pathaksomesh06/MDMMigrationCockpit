@@ -4,8 +4,17 @@ import Foundation
 // The Classic API wraps everything in a named root key and uses snake_case.
 // Field sets vary by Jamf version, so optionals are used liberally.
 
+/// Profile list. The Classic API wraps macOS and mobile-device profiles under
+/// different top-level keys (`os_x_configuration_profiles` vs
+/// `configuration_profiles`), so both are accepted and whichever is present
+/// wins. Decoding stays working if Jamf's naming differs from expectations.
 struct JamfProfileListResponse: Decodable {
-    let os_x_configuration_profiles: [JamfProfileSummary]
+    let os_x_configuration_profiles: [JamfProfileSummary]?
+    let configuration_profiles: [JamfProfileSummary]?
+
+    var profiles: [JamfProfileSummary] {
+        os_x_configuration_profiles ?? configuration_profiles ?? []
+    }
 }
 
 struct JamfProfileSummary: Decodable, Identifiable {
@@ -14,7 +23,12 @@ struct JamfProfileSummary: Decodable, Identifiable {
 }
 
 struct JamfProfileDetailResponse: Decodable {
-    let os_x_configuration_profile: JamfProfileDetail
+    let os_x_configuration_profile: JamfProfileDetail?
+    let configuration_profile: JamfProfileDetail?
+
+    var profile: JamfProfileDetail? {
+        os_x_configuration_profile ?? configuration_profile
+    }
 }
 
 struct JamfProfileDetail: Decodable, Identifiable {

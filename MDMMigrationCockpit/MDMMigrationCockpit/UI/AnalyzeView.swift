@@ -14,7 +14,14 @@ struct AnalyzeView: View {
     @State private var showingCatalog = false
     @State private var catalogSearch = ""
     @State private var tab: Tab = .plan
+    /// Which payload rows are open, keyed by PayloadCapability.id.
+    @State private var expandedPayloads: Set<String> = []
+    /// Same for the plan tab. PlanItem.id is a fresh UUID per build, so this
+    /// resets when the plan is rebuilt — which is correct, the rows changed.
+    @State private var expandedPlanItems: Set<UUID> = []
     var direction: MigrationDirection = .jamfToIntune
+    /// Which device platform this session covers, chosen at launch.
+    var platform: DevicePlatform = .mac
 
     enum Tab: String, CaseIterable, Identifiable {
         case plan   = "Payloads by category"
@@ -24,49 +31,49 @@ struct AnalyzeView: View {
 
     var body: some View {
         Group {
-            switch model.state {
-            case .idle, .loading:
-                loadingView(model.state)
-            case .failed(let message):
-                failedView(message)
-            case .loaded:
-                switch model.analysisState {
+            if platform != .mac {
+                comingSoonView
+            } else {
+                switch model.state {
                 case .idle, .loading:
-                    loadingView(model.analysisState)
+                    loadingView(model.state)
                 case .failed(let message):
                     failedView(message)
                 case .loaded:
-                    planView
+                    switch model.analysisState {
+                    case .idle, .loading:
+                        loadingView(model.analysisState)
+                    case .failed(let message):
+                        failedView(message)
+                    case .loaded:
+                        planView
+                    }
                 }
             }
         }
-        .task {
+        .task(id: PlatformDirection(direction: direction, platform: platform)) {
+            // Configuration comparison is macOS-only for now. The iOS payload
+            // and key data is in place and correct, but the mapping table has
+            // no iOS rows, so every delivery verdict would come from a
+            // fallback rather than from knowledge — Passcode and Web Content
+            // Filter would both be called "custom profile" when Jamf has
+            // native editors for them. Wrong advice is worse than none.
+            //
+            // Nothing is fetched: no point touching either tenant for a
+            // comparison that won't be shown.
+            guard platform == .mac else { return }
+
+            // Keyed on both: the view model is a @StateObject and survives a
+            // change to either, so switching direction or platform has to
+            // re-run the analysis rather than just relabel the header.
+            let changed = model.direction != direction || model.platform != platform
             model.direction = direction
-            await model.loadInventory(app: app)
-        }
-        .toolbar {
-            Button {
-                showingCatalog = true
-            } label: {
-                Label("Intune Catalog", systemImage: "list.bullet.rectangle")
+            model.platform = platform
+            if changed {
+                await model.refresh(app: app)
+            } else {
+                await model.loadInventory(app: app)
             }
-            .disabled(!model.catalog.isAvailable)
-            .help("Inspect the macOS settings harvested from Intune")
-
-            Button {
-                showingExporter = true
-            } label: {
-                Label("Export Plan", systemImage: "square.and.arrow.up")
-            }
-            .disabled(model.reportMarkdown.isEmpty)
-            .help("Save the migration plan as Markdown for design review or change-board sign-off")
-
-            Button {
-                Task { await model.refresh(app: app) }
-            } label: {
-                Label("Refresh", systemImage: "arrow.clockwise")
-            }
-            .disabled({ if case .loading = model.state { true } else { false } }())
         }
         .sheet(isPresented: $showingCatalog) {
             catalogInspector
@@ -75,7 +82,7 @@ struct AnalyzeView: View {
             isPresented: $showingExporter,
             document: MarkdownDocument(text: model.reportMarkdown),
             contentType: .plainText,
-            defaultFilename: "Jamf-to-Intune-Migration-Plan.md"
+            defaultFilename: "\(direction.sourceShortName)-to-\(direction.targetShortName)-Migration-Plan.md"
         ) { result in
             if case let .failure(error) = result {
                 model.analysisState = .failed("Export failed: \(error.localizedDescription)")
@@ -95,7 +102,7 @@ struct AnalyzeView: View {
         VStack(spacing: 0) {
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Intune macOS settings catalog")
+                    Text("Intune \(platform.appleName) settings catalog")
                         .font(.title3.weight(.semibold))
                     Text("\(model.catalog.settingCount) settings across \(model.catalog.domainSummary.count) domains")
                         .font(.caption)
@@ -157,6 +164,32 @@ struct AnalyzeView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
+    /// Analyze is Mac-only for now. Migrate and Validate are unaffected —
+    /// ABM reassignment doesn't depend on payload knowledge.
+    private var comingSoonView: some View {
+        VStack(spacing: 12) {
+            Image(systemName: platform.symbol)
+                .font(.system(size: 34))
+                .foregroundStyle(.tertiary)
+            Text("\(platform.label) analysis — coming soon")
+                .font(.headline)
+            Text("Configuration comparison covers Mac for now. The \(platform.appleName) payload data is in place, but will be released soon.")
+                .font(.callout)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: 520)
+            Text("Migrate and Validate work normally for \(platform.label) — device reassignment through ABM doesn't depend on this.")
+                .font(.caption)
+                .foregroundStyle(.tertiary)
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: 520)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding()
+    }
+
     private func failedView(_ message: String) -> some View {
         VStack(spacing: 12) {
             Image(systemName: "exclamationmark.triangle.fill")
@@ -180,8 +213,12 @@ struct AnalyzeView: View {
 
     private var planView: some View {
         VStack(spacing: 0) {
-            PageHeader(title: "Analyze",
-                       subtitle: "Step 2 of 4 · \(direction.shortLabel)")
+            HStack(alignment: .top) {
+                PageHeader(title: "Analyze",
+                           subtitle: "Step 2 of 4 · \(direction.shortLabel) · \(platform.label)")
+                Spacer()
+                actionBar
+            }
 
             Picker("", selection: $tab) {
                 ForEach(Tab.allCases) { Text($0.rawValue).tag($0) }
@@ -204,6 +241,41 @@ struct AnalyzeView: View {
                 planList
             }
         }
+    }
+
+    /// Actions live in the page body, not `.toolbar`.
+    ///
+    /// This NavigationStack sits inside the rail's HStack rather than at the
+    /// root of the scene, and SwiftUI only bridges toolbar items to the window
+    /// toolbar from a root navigation container — nested ones drop them
+    /// silently, with no warning and no visible buttons.
+    private var actionBar: some View {
+        HStack(spacing: 8) {
+            Button {
+                showingCatalog = true
+            } label: {
+                Label("Intune Catalog", systemImage: "list.bullet.rectangle")
+            }
+            .disabled(!model.catalog.isAvailable)
+            .help("Inspect the \(platform.appleName) settings harvested from Intune")
+
+            Button {
+                showingExporter = true
+            } label: {
+                Label("Export Plan", systemImage: "square.and.arrow.up")
+            }
+            .disabled(model.reportMarkdown.isEmpty)
+            .help("Save the migration plan as Markdown for design review or change-board sign-off")
+
+            Button {
+                Task { await model.refresh(app: app) }
+            } label: {
+                Label("Refresh", systemImage: "arrow.clockwise")
+            }
+            .disabled({ if case .loading = model.state { true } else { false } }())
+        }
+        .padding(.trailing, 14)
+        .padding(.top, 14)
     }
 
     // MARK: - Payload browser
@@ -239,7 +311,7 @@ struct AnalyzeView: View {
                         .contentShape(Capsule())
                     }
                     .buttonStyle(.plain)
-                    .help(status.explanation)
+                    .help(status.explanation(direction))
                 }
             }
             Spacer()
@@ -279,25 +351,23 @@ struct AnalyzeView: View {
 
             Divider()
 
-            List {
-                ForEach(model.matrixByCategory, id: \.category) { group in
-                    Section {
-                        ForEach(group.rows) { payload in
-                            payloadRow(payload)
-                        }
-                    } header: {
-                        HStack(spacing: 6) {
-                            Text(group.category)
-                            Text("(\(group.rows.count))")
-                                .foregroundStyle(.secondary)
-                                .monospacedDigit()
-                            Spacer()
-                            let attention = group.rows.filter { $0.status.needsAttention }.count
-                            if attention > 0 {
-                                Text("\(attention) need attention")
-                                    .font(.caption)
-                                    .foregroundStyle(.orange)
+            ScrollView {
+                // A macOS `List` is NSTableView-backed and caches row heights,
+                // which leaves DisclosureGroups further down the list unable
+                // to hit-test until a row above them forces a re-layout.
+                // LazyVStack lays out in SwiftUI's own system, so every row
+                // responds on first click.
+                LazyVStack(alignment: .leading, spacing: 0, pinnedViews: [.sectionHeaders]) {
+                    ForEach(model.matrixByCategory, id: \.category) { group in
+                        Section {
+                            ForEach(group.rows) { payload in
+                                payloadRow(payload)
+                                    .padding(.horizontal, 14)
+                                    .padding(.vertical, 7)
+                                Divider()
                             }
+                        } header: {
+                            categoryHeader(category: group.category, rows: group.rows)
                         }
                     }
                 }
@@ -317,8 +387,43 @@ struct AnalyzeView: View {
         }
     }
 
+    /// Pinned section header. Needs an opaque background — rows scroll
+    /// underneath it.
+    private func categoryHeader(category: String, rows: [PayloadCapability]) -> some View {
+        HStack(spacing: 6) {
+            Text(category).font(.subheadline.weight(.semibold))
+            Text("(\(rows.count))")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .monospacedDigit()
+            Spacer()
+            let attention = rows.filter { $0.status.needsAttention }.count
+            if attention > 0 {
+                Text("\(attention) need attention")
+                    .font(.caption)
+                    .foregroundStyle(.orange)
+            }
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 6)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(.bar)
+        .overlay(alignment: .bottom) { Divider() }
+    }
+
+    /// Expansion is held here rather than inside each DisclosureGroup, so it
+    /// survives scrolling, filtering and direction changes.
+    private func expansionBinding(_ id: String) -> Binding<Bool> {
+        Binding(
+            get: { expandedPayloads.contains(id) },
+            set: { isOpen in
+                if isOpen { expandedPayloads.insert(id) } else { expandedPayloads.remove(id) }
+            }
+        )
+    }
+
     private func payloadRow(_ payload: PayloadCapability) -> some View {
-        DisclosureGroup {
+        DisclosureGroup(isExpanded: expansionBinding(payload.id)) {
             VStack(alignment: .leading, spacing: 8) {
                 // Side-by-side capability summary.
                 HStack(alignment: .top, spacing: 16) {
@@ -345,7 +450,8 @@ struct AnalyzeView: View {
                 }
 
                 if !payload.comparisons.isEmpty {
-                    settingDiffTable(comparisons: payload.comparisons)
+                    settingDiffTable(comparisons: payload.comparisons,
+                                     delivery: payload.delivery)
                 }
                 if !payload.notes.isEmpty {
                     Text(payload.notes)
@@ -362,8 +468,14 @@ struct AnalyzeView: View {
                     Label("A declarative (DDM) equivalent also exists — prefer it for new builds.",
                           systemImage: "sparkles")
                         .font(.caption)
-                        .foregroundStyle(.purple)
+                        .foregroundStyle(Theme.declare)
                 }
+
+                // Kept here for anyone cross-referencing Apple's documentation.
+                Text(payload.domain)
+                    .font(.caption.monospaced())
+                    .foregroundStyle(.tertiary)
+                    .textSelection(.enabled)
             }
             .padding(.vertical, 4)
         } label: {
@@ -374,9 +486,9 @@ struct AnalyzeView: View {
                         statusChip(payload.status)
                     }
                     HStack(spacing: 6) {
-                        Text(payload.domain)
-                            .font(.caption.monospaced())
-                            .foregroundStyle(.tertiary)
+                        // The payload type is implementation detail — nobody
+                        // types it into either console — so it lives in the
+                        // expanded detail rather than on every row.
                         Image(systemName: payload.delivery.symbol)
                             .font(.caption2)
                             .foregroundStyle(color(for: payload.delivery))
@@ -426,13 +538,13 @@ struct AnalyzeView: View {
     private func statusChip(_ status: PayloadStatus) -> some View {
         HStack(spacing: 3) {
             Image(systemName: status.symbol).font(.caption2)
-            Text(status.rawValue).font(.caption2.weight(.medium))
+            Text(status.label(direction)).font(.caption2.weight(.medium))
         }
         .foregroundStyle(color(for: status))
         .padding(.horizontal, 6)
         .padding(.vertical, 2)
         .background(Capsule().fill(color(for: status).opacity(0.12)))
-        .help(status.explanation)
+        .help(status.explanation(direction))
     }
 
     private func color(for status: PayloadStatus) -> Color {
@@ -516,7 +628,7 @@ struct AnalyzeView: View {
                             Text("\(model.plan.count(bucket))")
                                 .font(.title2.weight(.semibold))
                                 .monospacedDigit()
-                            Text(bucket.rawValue)
+                            Text(bucket.label(direction))
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                                 .multilineTextAlignment(.center)
@@ -539,7 +651,7 @@ struct AnalyzeView: View {
                         .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
-                    .help(bucket.summary)
+                    .help(bucket.summary(direction))
                 }
             }
 
@@ -572,27 +684,55 @@ struct AnalyzeView: View {
     }
 
     private var planList: some View {
-        List {
-            ForEach(visibleBuckets) { bucket in
-                let items = model.plan.items(in: bucket)
-                if !items.isEmpty {
-                    Section {
-                        ForEach(items) { item in
-                            planRow(item, bucket: bucket)
-                        }
-                    } header: {
-                        HStack(spacing: 6) {
-                            Image(systemName: bucket.symbol)
-                                .foregroundStyle(color(for: bucket))
-                            Text("\(bucket.rawValue) (\(items.count))")
-                            Text("— \(bucket.summary)")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
+        ScrollView {
+            // Same reason as categoryBrowser: List caches row heights and
+            // leaves lower DisclosureGroups unable to hit-test.
+            LazyVStack(alignment: .leading, spacing: 0, pinnedViews: [.sectionHeaders]) {
+                ForEach(visibleBuckets) { bucket in
+                    let items = model.plan.items(in: bucket)
+                    if !items.isEmpty {
+                        Section {
+                            ForEach(items) { item in
+                                planRow(item, bucket: bucket)
+                                    .padding(.horizontal, 14)
+                                    .padding(.vertical, 7)
+                                Divider()
+                            }
+                        } header: {
+                            bucketHeader(bucket, count: items.count)
                         }
                     }
                 }
             }
         }
+    }
+
+    private func bucketHeader(_ bucket: PlanBucket, count: Int) -> some View {
+        HStack(spacing: 6) {
+            Image(systemName: bucket.symbol)
+                .foregroundStyle(color(for: bucket))
+            Text("\(bucket.label(direction)) (\(count))")
+                .font(.subheadline.weight(.semibold))
+                .monospacedDigit()
+            Text("— \(bucket.summary(direction))")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            Spacer()
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 6)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(.bar)
+        .overlay(alignment: .bottom) { Divider() }
+    }
+
+    private func planExpansionBinding(_ id: UUID) -> Binding<Bool> {
+        Binding(
+            get: { expandedPlanItems.contains(id) },
+            set: { isOpen in
+                if isOpen { expandedPlanItems.insert(id) } else { expandedPlanItems.remove(id) }
+            }
+        )
     }
 
     private var visibleBuckets: [PlanBucket] {
@@ -601,10 +741,11 @@ struct AnalyzeView: View {
     }
 
     private func planRow(_ item: PlanItem, bucket: PlanBucket) -> some View {
-        DisclosureGroup {
+        DisclosureGroup(isExpanded: planExpansionBinding(item.id)) {
             VStack(alignment: .leading, spacing: 8) {
                 if !item.comparisons.isEmpty {
-                    settingDiffTable(comparisons: item.comparisons)
+                    settingDiffTable(comparisons: item.comparisons,
+                                     delivery: item.delivery)
                 }
                 if !item.notes.isEmpty {
                     Text(item.notes)
@@ -752,7 +893,8 @@ struct AnalyzeView: View {
     }
 
     /// The actual diff: every Jamf setting against what Intune has.
-    private func settingDiffTable(comparisons: [SettingComparison]) -> some View {
+    private func settingDiffTable(comparisons: [SettingComparison],
+                                  delivery: DeliveryMethod) -> some View {
         VStack(alignment: .leading, spacing: 0) {
             HStack {
                 Text("Setting").frame(maxWidth: .infinity, alignment: .leading)
@@ -791,8 +933,8 @@ struct AnalyzeView: View {
                     Group {
                         switch comparison.outcome {
                         case .missing, .neither:
-                            Text(supportLabel(comparison.support))
-                                .foregroundStyle(supportColor(comparison.support))
+                            Text(supportLabel(comparison.support, delivery: delivery))
+                                .foregroundStyle(supportColor(comparison.support, delivery: delivery))
                         case .present:
                             Text("set (value n/a)")
                                 .foregroundStyle(.secondary)
@@ -813,7 +955,22 @@ struct AnalyzeView: View {
         .background(.quinary, in: RoundedRectangle(cornerRadius: 7))
     }
 
-    private func supportLabel(_ support: SettingComparison.CatalogSupport) -> String {
+    /// What the *target* MDM can do with a setting neither side has set.
+    ///
+    /// "Available in catalog" is an Intune concept — Jamf has no settings
+    /// catalog. When Jamf is the target the honest answer is whether Jamf has
+    /// a built-in editor for the payload or it has to be uploaded as a custom
+    /// .mobileconfig, which is exactly what the delivery method already says.
+    private func supportLabel(_ support: SettingComparison.CatalogSupport,
+                              delivery: DeliveryMethod) -> String {
+        if direction == .intuneToJamf {
+            switch delivery {
+            case .nativePayload:  return "native payload"
+            case .declarative:    return "available (DDM)"
+            case .notSupported:   return "not supported"
+            default:              return "via custom profile"
+            }
+        }
         switch support {
         case .declarative:  return "available (DDM)"
         case .supported:    return "available in catalog"
@@ -822,7 +979,11 @@ struct AnalyzeView: View {
         }
     }
 
-    private func supportColor(_ support: SettingComparison.CatalogSupport) -> Color {
+    private func supportColor(_ support: SettingComparison.CatalogSupport,
+                             delivery: DeliveryMethod) -> Color {
+        if direction == .intuneToJamf {
+            return color(for: delivery)
+        }
         switch support {
         case .declarative:  return .purple
         case .supported:    return .blue
@@ -859,6 +1020,7 @@ struct AnalyzeView: View {
         case .drift:          return .yellow
         case .toMigrate:      return .blue
         case .needsDesign:    return .orange
+        case .manual:         return .purple
         case .gap:            return .red
         }
     }

@@ -11,10 +11,19 @@ struct ConnectView: View {
     @EnvironmentObject private var app: AppState
     @StateObject private var model = ConnectViewModel()
     @State private var showingKeyImporter = false
+    /// Which platform this session covers, chosen at launch.
+    var platform: DevicePlatform = .mac
 
     var body: some View {
         VStack(spacing: 0) {
             PageHeader(title: "Connect", subtitle: "Step 1 of 4 · Authenticate to both MDMs and ABM")
+
+            // Said here rather than only on Analyze: an admin shouldn't
+            // authenticate three services and then find out the comparison
+            // isn't available for the platform they picked.
+            if platform != .mac {
+                comingSoonNotice
+            }
 
             Form {
             Section {
@@ -102,9 +111,17 @@ struct ConnectView: View {
             }
             }
         }
+        // Credentials are pointless for a platform the app can't act on yet.
+        // Disabling the whole form makes that concrete rather than letting
+        // someone authenticate three services and hit a wall.
+        .disabled(platform != .mac)
         .formStyle(.grouped)
         .onAppear { model.loadSecrets() }
         .task {
+            // Silent Keychain restore would connect all three services on its
+            // own, regardless of the form being disabled — disabling blocks
+            // interaction, not background work.
+            guard platform == .mac else { return }
             await model.restoreJamfSession(app: app)
             await model.restoreIntuneSession(app: app)
             await model.restoreABMSession(app: app)
@@ -164,6 +181,30 @@ struct ConnectView: View {
     }
 
     // MARK: - Pieces
+
+    /// Platform scope notice. Connect still works — Migrate and Validate need
+    /// these credentials for iPhone and iPad too.
+    private var comingSoonNotice: some View {
+        HStack(alignment: .top, spacing: 10) {
+            Image(systemName: platform.symbol)
+                .font(.title3)
+                .foregroundStyle(Theme.caution)
+            VStack(alignment: .leading, spacing: 2) {
+                Text("\(platform.label) analysis — coming soon")
+                    .font(.callout.weight(.semibold))
+            Text("Configuration comparison covers Mac for now. The \(platform.appleName) payload data is in place, but will be released soon. Connections are disabled until then — switch to Mac from the launch screen to continue.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            Spacer()
+        }
+        .padding(12)
+        .background(Theme.caution.opacity(0.08), in: RoundedRectangle(cornerRadius: 10))
+        .overlay(RoundedRectangle(cornerRadius: 10).stroke(Theme.caution.opacity(0.25)))
+        .padding(.horizontal, 20)
+        .padding(.bottom, 4)
+    }
 
     private func sectionHeader(_ title: String, _ subtitle: String, _ state: ConnectionState) -> some View {
         HStack(alignment: .firstTextBaseline) {

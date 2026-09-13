@@ -33,6 +33,21 @@ enum MigrationDirection: String, CaseIterable, Identifiable, Codable {
         }
     }
 
+    /// Tight forms for chips, table headers and bucket labels.
+    var sourceShortName: String {
+        switch self {
+        case .jamfToIntune: return "Jamf"
+        case .intuneToJamf: return "Intune"
+        }
+    }
+
+    var targetShortName: String {
+        switch self {
+        case .jamfToIntune: return "Intune"
+        case .intuneToJamf: return "Jamf"
+        }
+    }
+
     var summary: String {
         switch self {
         case .jamfToIntune:

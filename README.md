@@ -116,7 +116,6 @@ Resources/
 
 ## Known limitations
 
-- **Advisory notes are richer Jamf → Intune.** The comparison works both ways, but the mapping table's commentary was written with Intune as the destination, so the reverse leans harder on the live diff.
 - **Complex nested payloads are compared one level deep.** TCC and VPN carry hundreds of nested keys; expanding them fully produces noise rather than signal, so they're compared at the top level.
 - **Certificates, FileVault keys and Platform SSO registration never migrate.** No tool can move them — they are reissued. The app flags each one with the remediation path.
 - **Jamf Policies, Smart Group criteria and Self Service branding have no Intune equivalent** and must be rebuilt by hand.

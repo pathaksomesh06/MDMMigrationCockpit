@@ -6,6 +6,7 @@ enum PlanBucket: String, CaseIterable, Identifiable {
     case drift          = "Configured differently"
     case toMigrate      = "To migrate"
     case needsDesign    = "Needs design decision"
+    case manual         = "Manual migration"
     case gap            = "Gap — rebuild required"
 
     var id: String { rawValue }
@@ -16,17 +17,33 @@ enum PlanBucket: String, CaseIterable, Identifiable {
         case .drift:          return "arrow.triangle.branch"
         case .toMigrate:      return "arrow.right.circle.fill"
         case .needsDesign:    return "exclamationmark.triangle.fill"
+        case .manual:         return "hand.raised.fill"
         case .gap:            return "xmark.octagon.fill"
         }
     }
 
-    var summary: String {
+    /// Display text. The raw value stays fixed so it can serve as a stable id;
+    /// what the admin reads names the actual destination MDM.
+    func label(_ direction: MigrationDirection) -> String {
         switch self {
-        case .alreadyCovered: return "Every setting already present in Intune with the same value"
+        case .alreadyCovered: return "Already in \(direction.targetShortName)"
+        case .drift:          return "Configured differently"
+        case .toMigrate:      return "To migrate"
+        case .needsDesign:    return "Needs design decision"
+        case .manual:         return "Manual migration"
+        case .gap:            return "Gap — rebuild required"
+        }
+    }
+
+    func summary(_ direction: MigrationDirection) -> String {
+        let target = direction.targetShortName
+        switch self {
+        case .alreadyCovered: return "Every setting already present in \(target) with the same value"
         case .drift:          return "Configured in both, but values or coverage differ"
-        case .toMigrate:      return "Not in Intune yet; translates cleanly"
+        case .toMigrate:      return "Not in \(target) yet; translates cleanly"
         case .needsDesign:    return "Caveats or unverified mapping — decide before migrating"
-        case .gap:            return "No Intune equivalent; rebuild by other means"
+        case .manual:         return "\(target) can do this, but nothing carries it across — recreate by hand"
+        case .gap:            return "No \(target) equivalent; rebuild by other means"
         }
     }
 }
@@ -97,9 +114,17 @@ struct MigrationPlan {
 struct MigrationPlanBuilder {
 
     let table: MappingTable
+    /// Which way the migration runs. This decides which tenant is read as the
+    /// source and — more importantly — which MDM the question "can this
+    /// actually be delivered?" is asked about.
+    var direction: MigrationDirection = .jamfToIntune
+
+    /// Microsoft's settings catalog is only an authority when Intune is the
+    /// one receiving the configuration.
+    private var targetIsIntune: Bool { direction == .jamfToIntune }
 
     func build(
-        profiles: [NormalizedProfile],
+        source: TargetIndex,
         scripts: [JamfScript],
         extensionAttributes: [JamfExtensionAttribute],
         policies: [JamfObjectSummary],
@@ -110,38 +135,53 @@ struct MigrationPlanBuilder {
 
         var items: [PlanItem] = []
 
-        // 1. Collapse every profile down to payload domains. A domain spread
-        //    across three Jamf profiles is still one thing to build in Intune.
-        var settingsByDomain: [String: [String: SettingValue]] = [:]
+        // 1. Collapse the source tenant down to payload domains. A domain
+        //    spread across three profiles is still one thing to build in the
+        //    target MDM.
+        var settingsByDomain: [String: [String: SettingValue?]] = [:]
         var profilesByDomain: [String: Set<String>] = [:]
         var unreadableProfiles: [String] = []
 
-        for profile in profiles {
-            if profile.payloads.isEmpty {
-                unreadableProfiles.append(profile.displayName)
+        for item in source.items {
+            if item.payloads.isEmpty {
+                // Scripts and compliance policies legitimately carry no
+                // payloads — only a profile with nothing in it is a problem.
+                switch item.kind {
+                case .jamfProfile, .customProfile, .settingsCatalog, .deviceConfig:
+                    unreadableProfiles.append(item.name)
+                case .shellScript, .compliance:
+                    break
+                }
                 continue
             }
-            for payload in profile.payloads {
-                profilesByDomain[payload.type, default: []].insert(profile.displayName)
-                for (key, value) in payload.settings {
-                    // Last writer wins; conflicts across profiles are a Jamf-side
-                    // problem and show up as drift against Intune either way.
-                    settingsByDomain[payload.type, default: [:]][key] = value
+            for (type, settings) in item.payloads {
+                profilesByDomain[type, default: []].insert(item.name)
+                for (key, value) in settings {
+                    // Last writer wins; conflicts across profiles are a
+                    // source-side problem and surface as drift either way.
+                    settingsByDomain[type, default: [:]][key] = value
                 }
             }
         }
 
         for (domain, settings) in settingsByDomain.sorted(by: { $0.key < $1.key }) {
             let mapping = table.mapping(forPayloadType: domain)
+            // Advice belongs to whichever MDM is receiving the config.
+            let advice = mapping?.advice(for: direction)
 
             var comparisons: [SettingComparison] = []
             var matched: Set<String> = []
 
             for (key, sourceValue) in settings.sorted(by: { $0.key < $1.key }) {
-                // Can Intune express this key at all? Microsoft's own catalog
-                // answers that, so no guessing is required.
+                // Can the target MDM express this key at all?
                 let support: SettingComparison.CatalogSupport
-                if !catalog.isAvailable {
+                if !targetIsIntune {
+                    // Jamf has no settings catalog — any payload key can be
+                    // carried as a custom .mobileconfig. Which mechanism
+                    // applies is the delivery method's job to state, and the
+                    // UI labels it from there.
+                    support = .supported(category: nil)
+                } else if !catalog.isAvailable {
                     support = .unknown
                 } else if let definition = catalog.lookup(domain: domain, key: key) {
                     support = definition.isDeclarative
@@ -159,9 +199,10 @@ struct MigrationPlanBuilder {
                 if let hit = target.lookup(payloadType: domain, key: key) {
                     matched.insert(hit.item.name)
                     let outcome: SettingComparison.Outcome
-                    if let targetValue = hit.value {
+                    if let sourceValue, let targetValue = hit.value {
                         outcome = sourceValue.matches(targetValue) ? .identical : .drift
                     } else {
+                        // One side exposes the key without a comparable value.
                         outcome = .present
                     }
                     comparisons.append(SettingComparison(
@@ -184,16 +225,16 @@ struct MigrationPlanBuilder {
                 }
             }
 
-            let (delivery, observed) = Self.delivery(
-                for: domain, mapping: mapping, target: target,
+            let (delivery, observed) = deliveryMethod(
+                for: domain, mapping: mapping, advice: advice, target: target,
                 catalog: catalog, comparisons: comparisons
             )
 
             // Notes: mapping-table text, plus anything the live evidence adds
             // or contradicts.
             var notes: [String] = []
-            if let mappingNotes = mapping?.notes, !mappingNotes.isEmpty {
-                notes.append(mappingNotes)
+            if let adviceNotes = advice?.notes, !adviceNotes.isEmpty {
+                notes.append(adviceNotes)
             }
             let catalogSupported = comparisons.contains {
                 switch $0.support {
@@ -201,15 +242,16 @@ struct MigrationPlanBuilder {
                 case .unsupported, .unknown:   return false
                 }
             }
-            if mapping?.status == .manual && catalogSupported {
+            if targetIsIntune, advice?.status == .manual, catalogSupported {
                 notes.append("⚠ The mapping table calls this a manual rebuild, but Intune's live catalog lists these keys. Treat the table entry as stale and verify in the portal.")
             }
-            if delivery == .settingsCatalog, let ddm = catalog.declarativeReplacement(for: domain) {
+            if targetIsIntune, delivery == .settingsCatalog,
+               let ddm = catalog.declarativeReplacement(for: domain) {
                 let category = ddm.categoryName ?? "a declarative configuration"
                 notes.append("A declarative (DDM) equivalent also exists under “\(category)”. Apple is retiring the legacy payload, so prefer DDM for new builds.")
             }
             if mapping == nil {
-                notes.append("No mapping-table entry — this verdict comes entirely from the live comparison with Intune.")
+                notes.append("No mapping-table entry — this verdict comes entirely from the live comparison with \(direction.targetName).")
             }
 
             var item = PlanItem(
@@ -219,10 +261,10 @@ struct MigrationPlanBuilder {
                     ?? catalog.displayName(forDomain: domain)
                     ?? domain,
                 payloadType: domain,
-                intuneTarget: mapping?.intuneEquivalent ?? catalog.displayName(forDomain: domain),
+                intuneTarget: advice?.equivalent ?? catalog.displayName(forDomain: domain),
                 delivery: delivery,
                 deliveryIsObserved: observed,
-                bucket: Self.bucket(status: mapping?.status, delivery: delivery, comparisons: comparisons),
+                bucket: Self.bucket(status: advice?.status, delivery: delivery, comparisons: comparisons),
                 notes: notes.joined(separator: " "),
                 userImpact: mapping?.userImpact
             )
@@ -242,7 +284,7 @@ struct MigrationPlanBuilder {
                 delivery: .unknown,
                 deliveryIsObserved: false,
                 bucket: .needsDesign,
-                notes: "Payload could not be parsed — inspect this profile directly in Jamf.",
+                notes: "Payload could not be parsed — inspect this profile directly in \(direction.sourceName).",
                 userImpact: nil
             ))
         }
@@ -324,6 +366,28 @@ struct MigrationPlanBuilder {
             ))
         }
 
+        // 6. Intune shell scripts. There is no automated route into Jamf:
+        //    triggers, scoping, run frequency and execution context all differ,
+        //    and Intune scripts take no parameters while Jamf's do. Rather than
+        //    invent a mapping, these are listed as source inventory with an
+        //    explicit hand-off.
+        if !targetIsIntune {
+            for script in source.items where script.kind == .shellScript {
+                items.append(PlanItem(
+                    sourceKind: "Script",
+                    identity: script.name,
+                    title: "Intune shell script",
+                    payloadType: nil,
+                    intuneTarget: "Recreate manually in Jamf",
+                    delivery: .unknown,
+                    deliveryIsObserved: false,
+                    bucket: .manual,
+                    notes: "Listed from the source tenant for completeness — nothing carries it across automatically. Recreate the script in Jamf and attach it to a policy with the right trigger and scope; run frequency, execution context and retry behaviour differ between the two.",
+                    userImpact: nil
+                ))
+            }
+        }
+
         return MigrationPlan(items: items, targetItems: target.items)
     }
 
@@ -331,17 +395,27 @@ struct MigrationPlanBuilder {
 
     /// Evidence first, in order of authority:
     ///   1. The target tenant already delivers this payload — mechanism known.
-    ///   2. Intune's own settings catalog lists the keys — supported, and the
-    ///      category tells us whether it's DDM or the regular catalog.
-    ///   3. The mapping table's declared expectation.
+    ///   2. The target MDM's own catalog lists the keys (Intune only).
+    ///   3. The mapping table's declared expectation for this destination.
     ///   4. Nothing can answer — say so rather than guess.
-    private static func delivery(
+    private func deliveryMethod(
         for domain: String,
         mapping: PayloadMapping?,
+        advice: PayloadMapping.TargetAdvice?,
         target: TargetIndex,
         catalog: CatalogIndex,
         comparisons: [SettingComparison]
     ) -> (DeliveryMethod, Bool) {
+
+        guard targetIsIntune else {
+            // Jamf as the target: the mapping table says whether Jamf has a
+            // built-in editor; everything else goes through Custom Settings
+            // as an uploaded .mobileconfig. Deliberately identical to
+            // CapabilityMatrixBuilder so both tabs never disagree.
+            let configured = !target.items(configuring: domain).isEmpty
+            let method = advice?.delivery ?? (mapping != nil ? .nativePayload : .customProfile)
+            return (method, configured)
+        }
 
         let configuring = target.items(configuring: domain)
         if configuring.contains(where: { $0.kind == .settingsCatalog }) {
@@ -377,7 +451,7 @@ struct MigrationPlanBuilder {
             return (.customProfile, true)
         }
 
-        if let declared = mapping?.intuneDelivery {
+        if let declared = advice?.delivery {
             return (declared, false)
         }
         return (mapping == nil ? .unknown : .customProfile, false)

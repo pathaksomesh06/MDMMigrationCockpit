@@ -27,13 +27,39 @@ final class MigrateViewModel: ObservableObject {
     @Published var loadingDevices = false
     @Published var deviceError: String?
 
-    // Migration direction — remembered between launches.
-    @AppStorage("migrate.sourceServerID") var sourceServerID: String = ""
-    @AppStorage("migrate.targetServerID") var targetServerID: String = ""
+    // Which ABM MDM server belongs to which vendor. ABM's mdmServers endpoint
+    // exposes only serverName and serverType (MDM / Apple Configurator) — there
+    // is no vendor field — so this mapping has to be stated by the admin once,
+    // then it holds for both directions.
+    @AppStorage("abm.jamfServerID") var jamfServerID: String = ""
+    @AppStorage("abm.intuneServerID") var intuneServerID: String = ""
+
+    /// Set from the launch screen's choice. Source and target follow from it.
+    @Published var direction: MigrationDirection = .jamfToIntune
+
+    /// Reading and writing these routes to the right vendor slot, so flipping
+    /// direction swaps the ends instead of leaving a stale pair behind.
+    var sourceServerID: String {
+        get { direction == .jamfToIntune ? jamfServerID : intuneServerID }
+        set {
+            if direction == .jamfToIntune { jamfServerID = newValue }
+            else { intuneServerID = newValue }
+        }
+    }
+
+    var targetServerID: String {
+        get { direction == .jamfToIntune ? intuneServerID : jamfServerID }
+        set {
+            if direction == .jamfToIntune { intuneServerID = newValue }
+            else { jamfServerID = newValue }
+        }
+    }
 
     // Selection & filtering
     @Published var selection = Set<String>()      // serial numbers
     @Published var searchText: String = ""
+    /// Which platform this session covers. Set from the launch screen.
+    @Published var platform: DevicePlatform = .mac
 
     // The consequential part: reassignment in ABM.
     @Published var showingConfirmation = false
@@ -121,14 +147,41 @@ final class MigrateViewModel: ObservableObject {
         !sourceServerID.isEmpty && !targetServerID.isEmpty && sourceServerID != targetServerID
     }
 
-    /// Devices on the source server, filtered by the search box.
+    /// Devices on the source server, filtered by platform and the search box.
     var candidates: [ManagedDevice] {
         guard directionValid else { return [] }
-        guard !searchText.isEmpty else { return sourceDevices }
+        let onPlatform = sourceDevices.filter { $0.classification == .supported(platform) }
+        guard !searchText.isEmpty else { return onPlatform }
         let query = searchText.lowercased()
-        return sourceDevices.filter {
+        return onPlatform.filter {
             $0.id.lowercased().contains(query) || $0.model.lowercased().contains(query)
         }
+    }
+
+    /// How many devices sit on the source server for each platform, so the
+    /// picker can show counts instead of making the admin guess.
+    func deviceCount(_ platform: DevicePlatform) -> Int {
+        sourceDevices.lazy.filter { $0.classification == .supported(platform) }.count
+    }
+
+    /// Everything on the source server that this session isn't migrating —
+    /// other platforms plus device types the tool doesn't handle at all.
+    var outOfScopeSummary: String {
+        var counts: [String: Int] = [:]
+        for device in sourceDevices {
+            switch device.classification {
+            case .supported(let other) where other != platform:
+                counts[other.label, default: 0] += 1
+            case .unsupported(let family):
+                counts[family, default: 0] += 1
+            default:
+                break
+            }
+        }
+        return counts
+            .sorted { $0.key < $1.key }
+            .map { "\($0.value) \($0.key)" }
+            .joined(separator: ", ")
     }
 
     func selectAllCandidates() {
